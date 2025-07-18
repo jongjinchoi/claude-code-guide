@@ -1,8 +1,18 @@
 # Claude Code Guide 🤖
 
-> 코딩 몰라도 OK, 터미널 무서워도 OK! AI와 함께하는 코딩의 첫걸음
+<p align="center">
+  <img src="public/images/claude-code-guide-og.png" alt="Claude Code Guide" width="100%" style="max-width: 800px;">
+</p>
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-CC785C?style=for-the-badge)](https://claude-code-guide-sooty.vercel.app/)
+<p align="center">
+  <strong>코딩 몰라도 OK, 터미널 무서워도 OK! AI와 함께하는 코딩의 첫걸음</strong>
+</p>
+
+<p align="center">
+  <a href="https://claude-code-guide-sooty.vercel.app/">
+    <img src="https://img.shields.io/badge/Live%20Demo-Visit%20Site-CC785C?style=for-the-badge" alt="Live Demo">
+  </a>
+</p>
 
 ## 🎯 프로젝트 소개
 
