@@ -40,18 +40,15 @@ async function initializeLandingCounter() {
   // Google Sheets에서 실제 사용자 수 가져오기
   const actualUserCount = await fetchUserCount();
   
-  if (actualUserCount >= 50) {
-    // 50명 이상일 때만 카운터로 변경
-    counterEl.removeAttribute('data-special');
-    document.getElementById('counter').textContent = '0';
-    document.getElementById('counterText').textContent = '명이 이미 시작했습니다';
-    
-    // 0부터 올라가는 애니메이션
-    setTimeout(() => {
-      CounterAnimation.animate('counter', actualUserCount, 2000);
-    }, 1200);
-  }
-  // 50명 미만이면 기본 상태 유지 (특별한 메시지)
+  // 항상 숫자 카운터 표시 (특별한 스타일 유지)
+  // counterEl.removeAttribute('data-special'); // 주석 처리 - 스타일 유지
+  document.getElementById('counter').textContent = '0';
+  document.getElementById('counterText').textContent = '명이 여러분과 함께 하고 있어요';
+  
+  // 0부터 올라가는 애니메이션
+  setTimeout(() => {
+    CounterAnimation.animate('counter', actualUserCount, 2000);
+  }, 1200);
 }
 
 // 사용자 카운터 증가
@@ -87,10 +84,10 @@ async function fetchUserCount() {
   try {
     const response = await fetch(Analytics.APPS_SCRIPT_URL + '?action=getCounter&metric=users');
     const data = await response.json();
-    return data.value || 30; // 기본값 30
+    return data.value || 62; // 기본값 62 (현재 사용자 수)
   } catch (error) {
     console.error('사용자 수 가져오기 실패:', error);
-    return 30; // 실패 시 기본값 반환
+    return 62; // 실패 시 현재 사용자 수 반환
   }
 }
 

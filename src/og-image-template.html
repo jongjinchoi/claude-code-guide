@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1200, height=630">
+    <title>Claude Code Guide OG Image</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            width: 1200px;
+            height: 630px;
+            background: #0D0D0D;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 터미널 창 스타일 - 클래식 터미널 */
+        .terminal {
+            width: 1000px;
+            height: 520px;
+            background: #1A1A1A;
+            border: 2px solid #333;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .terminal-header {
+            background: #2D2D2D;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 8px;
+        }
+        
+        .terminal-dots {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .dot:nth-child(1) { background: #FF5F56; }
+        .dot:nth-child(2) { background: #FFBD2E; }
+        .dot:nth-child(3) { background: #27C93F; }
+        
+        .terminal-body {
+            flex: 1;
+            padding: 20px 40px 30px 40px;
+            color: #E5E5E5;
+            font-size: 13px;
+            line-height: 1.3;
+            overflow: hidden;
+        }
+        
+        /* ASCII Art 스타일 */
+        .ascii-art {
+            white-space: pre;
+            font-size: 11px;
+            line-height: 1;
+            color: #CC785C;
+            text-align: left;
+            margin-bottom: 30px;
+        }
+        
+        .command-line {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .prompt {
+            color: #CC785C;
+            display: inline;
+            font-weight: 600;
+        }
+        
+        .command {
+            color: #E5E5E5;
+            display: inline;
+        }
+        
+        .output {
+            color: #CC785C;
+            margin-left: 20px;
+        }
+        
+        .korean-text {
+            color: #D49578;
+            font-size: 16px;
+            text-align: left;
+            margin: 20px 0;
+            font-weight: 700;
+        }
+        
+        .comment {
+            color: #666;
+            font-style: italic;
+        }
+        
+        .info-line {
+            color: #888;
+            margin: 15px 0;
+        }
+        
+        .highlight {
+            color: #CC785C;
+            font-weight: bold;
+        }
+        
+        /* 정적 커서 */
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background: #CC785C;
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal">
+        <div class="terminal-header">
+            <div class="terminal-dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+        <div class="terminal-body">
+            <div style="color: #888; margin-bottom: 10px;">
+Last login: Thu Jul 17 13:28:00 on ttys001
+            </div>
+            
+            <div class="command-line">
+                <span class="prompt">jongjin@MacBook-Pro ~ %</span> <span class="command">cat claude-code-guide.txt</span>
+            </div>
+            <pre style="color: #CC785C; margin: 10px 0; font-size: 10px; line-height: 1.2;">
+  ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗     ██████╗ ██████╗ ██████╗ ███████╗
+ ██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝    ██╔════╝██╔═══██╗██╔══██╗██╔════╝
+ ██║     ██║     ███████║██║   ██║██║  ██║█████╗      ██║     ██║   ██║██║  ██║█████╗  
+ ██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝      ██║     ██║   ██║██║  ██║██╔══╝  
+ ╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗    ╚██████╗╚██████╔╝██████╔╝███████╗
+  ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝     ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝
+   ██████╗ ██╗   ██╗██╗██████╗ ███████╗
+  ██╔════╝ ██║   ██║██║██╔══██╗██╔════╝
+  ██║  ███╗██║   ██║██║██║  ██║█████╗  
+  ██║   ██║██║   ██║██║██║  ██║██╔══╝  
+  ╚██████╔╝╚██████╔╝██║██████╔╝███████╗
+   ╚═════╝  ╚═════╝ ╚═╝╚═════╝ ╚══════╝
+            </pre>
+            
+            <pre style="color: #D49578; margin: 15px 0; font-size: 12px; line-height: 1.2; font-family: 'JetBrains Mono', monospace;">
+╔═══════════════════════════════════════╗
+║         Claude Code 설치 가이드          ║
+╠═══════════════════════════════════════╣
+║  1. 시작 전 준비    4. Claude Code 설치   ║
+║  2. Homebrew 설치  5. 계정 연결          ║
+║  3. Node.js 설치   6. 첫 프로젝트         ║
+╚═══════════════════════════════════════╝
+            </pre>
+            
+            <div class="command-line" style="margin-top: 10px;">
+                <span class="prompt">jongjin@MacBook-Pro ~ %</span> <span class="command">cat credits.txt</span>
+            </div>
+            <div style="color: #E5E5E5; margin: 5px 0 5px 20px; font-size: 12px;">
+Author: Jongjin Choi
+            </div>
+            <div class="command-line" style="margin-bottom: 0;">
+                <span class="prompt">jongjin@MacBook-Pro ~ %</span> <span class="cursor"></span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
