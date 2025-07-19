@@ -121,6 +121,7 @@ guide-tracking-example.html
 # Local Google Apps Script development
 google-apps-script/
 .clasp.json
+*.gs
 
 # Pages directory (old structure)
 pages/
