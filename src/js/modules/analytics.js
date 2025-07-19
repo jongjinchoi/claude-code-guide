@@ -4,7 +4,7 @@ export const Analytics = {
     GA_MEASUREMENT_ID: 'G-2XGK1CF366',
     
     // Google Apps Script 엔드포인트
-    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbw9IG4a8jKUPG9s_ouhY6yk8xn3UUP-sDri8wDm9_WGct4cbGsWp6P1X45Ei5DUf-Q5/exec',
+    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwkzkgowI4NVmszGF_bEtkxf82f1M8fRoMn2GYHSua6UT5Ead0vPdhUHFglZJ0S4jZu-A/exec',
     
     // Google Analytics에서 수집할 이벤트 목록
     GA_EVENTS_TO_SHEETS: [
