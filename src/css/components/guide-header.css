@@ -193,17 +193,105 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
-@media (max-width: 768px) {
-    .header-controls {
-        flex-direction: column;
+/* 모바일 가로 모드 */
+@media (max-width: 767px) and (orientation: landscape) {
+    .header {
+        padding: var(--space-3) 0;
+        margin-bottom: var(--space-2);
         gap: var(--space-2);
+    }
+    
+    .logo i {
+        font-size: 1.75rem;
+    }
+    
+    .logo h1 {
+        font-size: 1.5rem;
+    }
+    
+    .header-controls {
+        gap: var(--space-1);
+    }
+    
+    .os-toggle {
+        height: 36px;
+        padding: 0 12px;
+        font-size: 0.75rem;
+    }
+    
+    .font-size-controls {
+        height: 36px;
+    }
+    
+    .font-size-btn {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .theme-toggle {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+@media (max-width: 767px) {
+    .header {
+        padding: var(--space-4) 0 var(--space-3);
+        margin-bottom: var(--space-3);
+        gap: var(--space-3);
+    }
+    
+    .logo {
+        flex-direction: column;
+        gap: var(--space-1);
+    }
+    
+    .logo i {
+        font-size: 2.5rem;
+    }
+    
+    .logo h1 {
+        font-size: 1.5rem;
+        text-align: center;
+    }
+    
+    .header-controls {
+        flex-direction: row;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+    }
+    
+    .os-toggle {
+        height: 40px;
+        padding: 0 16px;
+        font-size: 0.875rem;
+    }
+    
+    .os-toggle i {
+        font-size: 0.875rem;
     }
     
     .font-size-controls {
         order: 1;
+        height: 40px;
+    }
+    
+    .font-size-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 0.875rem;
     }
     
     .font-size-label {
         display: none;
+    }
+    
+    .theme-toggle {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .theme-toggle i {
+        font-size: 1rem;
     }
 }

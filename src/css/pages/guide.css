@@ -120,9 +120,30 @@
         padding-bottom: 100px;
     }
     
+    .main-content {
+        margin-top: var(--space-3);
+    }
+    
     .tooltip-text {
         width: 150px;
         margin-left: -75px;
         font-size: 0.75rem;
+    }
+}
+
+/* 모바일 가로 모드 */
+@media (max-width: 767px) and (orientation: landscape) {
+    .container {
+        padding: 0 var(--space-3);
+        padding-bottom: 80px;
+    }
+    
+    .main-content {
+        margin-top: var(--space-2);
+    }
+    
+    .simple-check {
+        padding: var(--space-3);
+        margin-bottom: var(--space-3);
     }
 }

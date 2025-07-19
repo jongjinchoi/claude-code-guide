@@ -479,21 +479,212 @@
     border: 1px solid var(--border-color);
 }
 
+/* Mobile responsive improvements */
 @media (max-width: 768px) {
-    .about-content {
+    .container {
+        padding: 0 var(--space-2);
+    }
+    
+    .about-header {
         padding: var(--space-4) 0;
+        margin-bottom: var(--space-4);
+    }
+    
+    .about-title {
+        font-size: 2rem;
+        margin-bottom: var(--space-2);
+    }
+    
+    .about-title i {
+        font-size: 1.75rem;
+        margin-right: var(--space-1);
+    }
+    
+    .about-subtitle {
+        font-size: 1rem;
+    }
+    
+    .about-content section {
+        margin-bottom: var(--space-5);
+    }
+    
+    .about-content h2 {
+        font-size: 1.5rem;
+        margin-bottom: var(--space-3);
+    }
+    
+    .intro-section {
+        padding: var(--space-4);
+        margin-bottom: var(--space-4);
+    }
+    
+    .intro-section h2::before,
+    .features-section h2::before {
+        font-size: 1.25rem;
+    }
+    
+    .intro-content p {
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+    
+    .beginner-tip {
+        padding: var(--space-2);
+        margin-top: var(--space-3);
+        font-size: 0.875rem;
     }
     
     .features-grid {
         grid-template-columns: 1fr;
+        gap: var(--space-3);
+    }
+    
+    .feature-card {
+        padding: var(--space-3);
+    }
+    
+    .feature-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+    
+    .feature-card h3 {
+        font-size: 1.125rem;
+    }
+    
+    .recommendation-badge {
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        top: -12px;
+        right: 10px;
+    }
+    
+    .target-users-box {
+        padding: var(--space-4);
     }
     
     .target-user-item {
         gap: var(--space-2);
+        margin-bottom: var(--space-3);
+        font-size: 0.9375rem;
+    }
+    
+    .target-user-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+    }
+    
+    .cta-section {
+        padding: var(--space-4);
+        margin-top: var(--space-5);
+    }
+    
+    .cta-section h2 {
+        font-size: 1.5rem;
+    }
+    
+    .cta-subtitle {
+        font-size: 1rem;
     }
     
     .cta-info {
         flex-direction: column;
         gap: var(--space-2);
+        margin-bottom: var(--space-3);
+    }
+    
+    .cta-info span {
+        font-size: 0.8125rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .about-header {
+        padding: var(--space-3) 0;
+    }
+    
+    .about-title {
+        font-size: 1.75rem;
+    }
+    
+    .about-title i {
+        display: block;
+        margin: 0 0 var(--space-2) 0;
+    }
+    
+    .about-subtitle {
+        font-size: 0.9375rem;
+    }
+    
+    .about-content h2 {
+        font-size: 1.25rem;
+    }
+    
+    .intro-section {
+        padding: var(--space-3);
+    }
+    
+    .feature-card {
+        padding: var(--space-2);
+    }
+    
+    .target-users-box {
+        padding: var(--space-3);
+    }
+    
+    .cta-section {
+        padding: var(--space-3);
+    }
+}
+
+/* 모바일 가로 모드 */
+@media (max-width: 767px) and (orientation: landscape) {
+    .container {
+        padding: 0 var(--space-4);
+    }
+    
+    .about-header {
+        padding: var(--space-4) 0;
+    }
+    
+    .about-title {
+        font-size: 1.75rem;
+    }
+    
+    .about-subtitle {
+        font-size: 0.875rem;
+    }
+    
+    .intro-section h2,
+    .features-section h2,
+    .target-users-section h2,
+    .faq-section h2 {
+        font-size: 1.25rem;
+        margin-bottom: var(--space-3);
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-3);
+    }
+    
+    .feature-card {
+        padding: var(--space-3);
+    }
+    
+    .cta-section {
+        padding: var(--space-4) var(--space-3);
+    }
+    
+    .cta-section h2 {
+        font-size: 1.25rem;
+        margin-bottom: var(--space-2);
+    }
+    
+    .cta-subtitle {
+        font-size: 0.875rem;
+        margin-bottom: var(--space-3);
     }
 }

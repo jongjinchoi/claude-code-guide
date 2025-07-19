@@ -7,6 +7,7 @@ import { CodeCopier } from './modules/code-copier.js';
 import { showToast } from './modules/toast.js';
 import { Analytics } from './modules/analytics.js';
 import { GuideTracker } from './modules/guideTracker.js';
+import { MobileMenu } from './modules/mobile-menu.js';
 
 // Initialize theme system
 ThemeManager.init();
@@ -24,6 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
     FontController.init();
     CodeCopier.init();
     GuideManager.init();
+    
+    // Initialize mobile menu
+    new MobileMenu();
     
     // Make GuideTracker available globally
     window.GuideTracker = GuideTracker;

@@ -1,9 +1,13 @@
 // About page JavaScript
 import { ThemeManager } from './modules/theme.js';
 import { Analytics } from './modules/analytics.js';
+import { MobileMenu } from './modules/mobile-menu.js';
 
 // Initialize theme system
 ThemeManager.init();
+
+// Initialize mobile menu
+new MobileMenu();
 
 // Initialize FAQ accordion
 document.addEventListener('DOMContentLoaded', () => {

@@ -81,3 +81,62 @@
     border-color: #E09B7A;
     color: #E09B7A;
 }
+
+/* Tablet specific styles */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .btn-hero-primary {
+        width: 100%;
+        margin: 0;
+        justify-content: center;
+        font-size: 1.0625rem;
+        padding: 14px var(--space-4);
+        height: 50px;
+    }
+    
+    .btn-hero-secondary {
+        width: 100%;
+        margin: 0;
+        justify-content: center;
+        font-size: 1rem;
+        padding: 12px var(--space-3);
+        height: 46px;
+    }
+}
+
+/* Mobile responsive buttons */
+@media (max-width: 767px) {
+    .btn-hero-primary {
+        width: 85%;
+        margin: 0 auto;
+        justify-content: center;
+        font-size: 0.9375rem;
+        padding: 12px var(--space-4);
+        height: 44px;
+        animation: none; /* Disable animation on mobile for better performance */
+    }
+    
+    .btn-hero-secondary {
+        width: 80%;
+        margin: 0 auto;
+        justify-content: center;
+        font-size: 0.875rem;
+        padding: 10px var(--space-3);
+        height: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn-hero-primary {
+        width: 90%;
+        font-size: 0.875rem;
+        padding: 10px var(--space-3);
+        height: 42px;
+    }
+    
+    .btn-hero-secondary {
+        width: 85%;
+        font-size: 0.8125rem;
+        padding: 8px var(--space-2);
+        height: 38px;
+    }
+}

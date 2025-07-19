@@ -49,6 +49,7 @@
 .author-links {
     display: flex;
     gap: 12px;
+    align-items: center;
 }
 
 .author-link {
@@ -94,6 +95,13 @@
     white-space: nowrap;
 }
 
+/* Desktop secondary links */
+.author-secondary-links {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
 /* 다크 테마 */
 [data-theme="dark"] .author-section {
     background: linear-gradient(135deg, rgba(224, 155, 122, 0.08), rgba(224, 155, 122, 0.03));
@@ -105,29 +113,200 @@
     border-color: var(--border-color);
 }
 
-/* 모바일 */
-@media (max-width: 768px) {
+/* 태블릿 */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .author-section {
+        padding: var(--space-5);
+    }
+    
     .author-profile {
-        padding: 12px;
-        gap: 10px;
+        gap: var(--space-4);
     }
     
     .author-avatar {
-        width: 40px;
-        height: 40px;
+        width: 100px;
+        height: 100px;
+    }
+    
+    .author-description {
+        font-size: 14px;
+        margin-bottom: 16px;
+    }
+    
+    /* 태블릿에서는 가로 배치 유지 */
+    .author-links {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+    
+    .author-link.blog-featured {
+        margin-right: 12px;
+    }
+}
+
+/* 모바일 */
+@media (max-width: 767px) {
+    .author-section {
+        padding: var(--space-4);
+        margin-top: var(--space-6);
+    }
+    
+    .author-profile {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--space-3);
+    }
+    
+    .author-avatar {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto;
+    }
+    
+    .author-info {
+        width: 100%;
     }
     
     .author-name {
+        font-size: 18px;
+        margin-bottom: 4px;
+    }
+    
+    .author-subtitle {
+        font-size: 13px;
+        margin-bottom: 12px;
+    }
+    
+    .author-description {
+        font-size: 13px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        padding: 0 var(--space-2);
+    }
+    
+    .author-links {
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+        width: 100%;
+    }
+    
+    .author-link {
+        width: 100%;
+        max-width: 280px;
+        height: 44px;
         font-size: 14px;
+        border-radius: var(--radius);
+        justify-content: center;
+    }
+    
+    .author-link.blog-featured {
+        width: 100%;
+        max-width: 280px;
+        padding: 12px 20px;
+        border-radius: var(--radius);
+        order: -1; /* 첫 번째로 배치 */
+    }
+    
+    /* 이메일과 LinkedIn 버튼을 가로로 배치 */
+    .author-links {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .author-secondary-links {
+        display: flex;
+        gap: 12px;
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
+        justify-content: center;
+    }
+    
+    .author-link:not(.blog-featured) {
+        flex: 1;
+        width: auto;
+        max-width: 80px;
+    }
+}
+
+/* 모바일 가로 모드 */
+@media (max-width: 767px) and (orientation: landscape) {
+    .author-section {
+        padding: var(--space-3) var(--space-4);
+        margin-top: var(--space-4);
+    }
+    
+    .author-profile {
+        flex-direction: row;
+        text-align: left;
+        gap: var(--space-4);
+        align-items: flex-start;
+    }
+    
+    .author-avatar {
+        width: 100px;
+        height: 100px;
+        margin: 0;
+        flex-shrink: 0;
+    }
+    
+    .author-info {
+        flex: 1;
+    }
+    
+    .author-name {
+        font-size: 16px;
+        margin-bottom: 2px;
     }
     
     .author-subtitle {
         font-size: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .author-description {
+        font-size: 12px;
+        line-height: 1.5;
+        margin-bottom: 12px;
+        padding: 0;
+        max-width: none;
+    }
+    
+    .author-links {
+        flex-direction: row;
+        gap: 8px;
+        align-items: center;
+        width: auto;
+        flex-wrap: wrap;
     }
     
     .author-link {
-        width: 28px;
-        height: 28px;
+        width: auto;
+        height: 32px;
         font-size: 12px;
+    }
+    
+    .author-link.blog-featured {
+        width: auto;
+        max-width: none;
+        padding: 6px 12px;
+        order: 0;
+    }
+    
+    .author-secondary-links {
+        display: flex;
+        gap: 8px;
+        width: auto;
+        max-width: none;
+        margin: 0;
+    }
+    
+    .author-link:not(.blog-featured) {
+        width: 32px;
+        height: 32px;
+        max-width: none;
     }
 }

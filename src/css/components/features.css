@@ -11,7 +11,25 @@
     opacity: 0;
 }
 
-@media (max-width: 768px) {
+/* Tablet specific styles */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .features-preview {
+        grid-template-columns: repeat(3, 1fr);
+        max-width: 700px;
+        gap: var(--space-2);
+    }
+    
+    .feature-item {
+        padding: var(--space-3);
+    }
+    
+    .feature-icon {
+        font-size: 2rem;
+        height: 50px;
+    }
+}
+
+@media (max-width: 767px) {
     .features-preview {
         grid-template-columns: 1fr;
         max-width: 400px;

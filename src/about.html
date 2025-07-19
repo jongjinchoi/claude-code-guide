@@ -52,7 +52,30 @@
             <a href="guide.html">시작하기</a>
             <a href="faq.html">도움말</a>
         </div>
+        <button class="nav-hamburger" aria-label="메뉴 열기">
+            <i class="fas fa-bars"></i>
+        </button>
     </nav>
+    
+    <!-- 모바일 메뉴 -->
+    <div class="mobile-menu-overlay"></div>
+    <div class="mobile-menu">
+        <div class="mobile-menu-header">
+            <div class="nav-logo">
+                <i class="fas fa-robot"></i>
+                <span>Claude Code</span>
+            </div>
+            <button class="mobile-menu-close" aria-label="메뉴 닫기">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="mobile-menu-items">
+            <a href="../index.html">홈</a>
+            <a href="about.html" class="active">소개</a>
+            <a href="guide.html">시작하기</a>
+            <a href="faq.html">도움말</a>
+        </div>
+    </div>
 
     <div class="container">
         <!-- 헤더 -->
@@ -317,23 +340,26 @@
                     <img src="images/profile.jpg" alt="Jongjin Choi" class="author-avatar">
                     <div class="author-info">
                         <div class="author-name">최종진(Jongjin Choi) aka Jin</div>
+                        <div class="author-subtitle">Forbes에 등장한 코워킹 스페이스 "Hive Arena" 창업자</div>
                         <div class="author-description">
-                            Forbes에 등장한 코워킹 스페이스 "Hive Arena" 창업자로, 5년의 육아 후 새로운 기회를 모색하던 과정에서 Claude Code의 매력에 빠져 누구나 쉽게 시작할 수 있는 가이드를 만들게 되었습니다. Made with ❤️
+                            5년의 육아 후 새로운 기회를 모색하던 과정에서 Claude Code의 매력에 빠져 누구나 쉽게 시작할 수 있는 가이드를 만들게 되었습니다. Made with ❤️
                         </div>
                         <div class="author-links">
                             <a href="https://jongjinchoi.com/forbes-featured-startup-founder-returns-to-business-after-parenting/" target="_blank" class="author-link blog-featured">
                                 <i class="fas fa-blog"></i>
                                 <span class="visit-label">방문하기 & 커피챗</span>
                             </a>
-                            <a href="mailto:me@jongjinchoi.com" class="author-link">
-                                <i class="fas fa-envelope"></i>
-                            </a>
-                            <a href="https://www.linkedin.com/in/jongjinchoi/" target="_blank" class="author-link">
-                                <i class="fab fa-linkedin"></i>
-                            </a>
-                            <a href="https://x.com/jongjin_choi_kr" target="_blank" class="author-link">
-                                <i class="fab fa-twitter"></i>
-                            </a>
+                            <div class="author-secondary-links">
+                                <a href="mailto:me@jongjinchoi.com" class="author-link">
+                                    <i class="fas fa-envelope"></i>
+                                </a>
+                                <a href="https://www.linkedin.com/in/jongjinchoi/" target="_blank" class="author-link">
+                                    <i class="fab fa-linkedin"></i>
+                                </a>
+                                <a href="https://x.com/jongjin_choi_kr" target="_blank" class="author-link">
+                                    <i class="fab fa-twitter"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

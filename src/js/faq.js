@@ -3,6 +3,7 @@ import { ThemeManager } from './modules/theme.js';
 import { OSDetector } from './modules/os-detector.js';
 import { FontController } from './modules/font-controller.js';
 import { Analytics } from './modules/analytics.js';
+import { MobileMenu } from './modules/mobile-menu.js';
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -17,6 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize font controller
     FontController.init();
+    
+    // Initialize mobile menu
+    new MobileMenu();
     
     // Initialize FAQ functionality
     initFAQ();

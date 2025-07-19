@@ -91,10 +91,143 @@
     width: 100%;
 }
 
-@media (max-width: 768px) {
+/* 햄버거 메뉴 버튼 */
+.nav-hamburger {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    transition: var(--transition-fast);
+}
+
+.nav-hamburger i {
+    font-size: 20px;
+    color: var(--text-primary);
+}
+
+.nav-hamburger:hover {
+    opacity: 0.8;
+}
+
+/* 모바일 메뉴 오버레이 */
+.mobile-menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-menu-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+/* 모바일 메뉴 패널 */
+.mobile-menu {
+    position: fixed;
+    top: 0;
+    right: -280px;
+    width: 280px;
+    height: 100vh;
+    background: var(--background);
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.mobile-menu.active {
+    right: 0;
+}
+
+.mobile-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.mobile-menu-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    font-size: 24px;
+    color: var(--text-secondary);
+    transition: var(--transition-fast);
+}
+
+.mobile-menu-close:hover {
+    color: var(--text-primary);
+}
+
+.mobile-menu-items {
+    flex: 1;
+    padding: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.mobile-menu-items a {
+    display: block;
+    padding: var(--space-2) var(--space-3);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: var(--radius);
+    transition: var(--transition-fast);
+}
+
+.mobile-menu-items a:hover {
+    background: var(--bg-secondary);
+    color: var(--primary-color);
+}
+
+.mobile-menu-items a.active {
+    background: rgba(204, 120, 92, 0.1);
+    color: var(--primary-color);
+}
+
+/* 다크모드 모바일 메뉴 */
+[data-theme="dark"] .mobile-menu {
+    background: #1a1a1a;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .mobile-menu-items a:hover {
+    background: #2a2a2a;
+}
+
+[data-theme="dark"] .mobile-menu-items a.active {
+    background: rgba(224, 155, 122, 0.15);
+    color: #E09B7A;
+}
+
+/* Tablet specific navigation */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .nav-minimal {
+        padding: var(--space-3) var(--space-4);
+        max-width: 1024px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 767px) {
     .nav-minimal {
         padding: var(--space-2) var(--space-3);
         padding-left: calc(30px + var(--space-3)); /* 모바일 Copyright 사이드바 공간 */
+        height: 60px; /* 모바일 네비게이션 높이 줄이기 */
     }
     
     .nav-logo {
@@ -105,12 +238,67 @@
         font-size: 22px; /* 고정 크기로 변경 */
     }
     
+    /* 데스크톱 메뉴 숨기기 */
     .nav-items {
-        gap: var(--space-2);
+        display: none;
+    }
+    
+    /* 햄버거 메뉴 표시 */
+    .nav-hamburger {
+        display: block;
+    }
+}
+
+/* 더 작은 모바일 화면 (360px 이하) */
+@media (max-width: 480px) {
+    .nav-minimal {
+        padding: 10px 12px;
+        padding-left: calc(28px + 12px);
+        height: 56px;
+    }
+    
+    .nav-logo {
+        font-size: 16px;
+        gap: 8px;
+    }
+    
+    .nav-logo i {
+        font-size: 20px;
+    }
+    
+    .nav-items {
+        gap: 8px;
     }
     
     .nav-items a {
-        font-size: 14px; /* 고정 크기로 변경 */
-        padding: var(--space-1);
+        font-size: 13px;
+        padding: 6px 8px;
+    }
+}
+
+/* 매우 작은 화면 (360px) */
+@media (max-width: 360px) {
+    .nav-minimal {
+        padding: 8px 10px;
+        padding-left: calc(26px + 10px);
+        height: 52px;
+    }
+    
+    .nav-logo {
+        font-size: 15px;
+        gap: 6px;
+    }
+    
+    .nav-logo i {
+        font-size: 18px;
+    }
+    
+    .nav-items {
+        gap: 6px;
+    }
+    
+    .nav-items a {
+        font-size: 12px;
+        padding: 4px 6px;
     }
 }
