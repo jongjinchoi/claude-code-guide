@@ -1049,12 +1049,13 @@ kbd.enter-key::after {
 }
 
 [data-theme="dark"] .back-to-summary-btn {
-    background: #666666;
+    background: rgba(204, 120, 92, 0.1);
     color: #E5E5E5;
 }
 
 [data-theme="dark"] .back-to-summary-btn:hover {
-    background: #777777;
+    background: #CC785C;
+    color: white;
 }
 
 [data-theme="dark"] .terminal-guide-box {
