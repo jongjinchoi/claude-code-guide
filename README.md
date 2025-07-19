@@ -34,11 +34,8 @@ Claude Code Guide는 프로그래밍 경험이 없는 일반인들도 쉽게 Cla
 - **Vite**: 빠른 개발 환경과 최적화된 빌드
 - **Vercel**: 자동 배포 및 호스팅
 
-### Analytics & Backend
-- **Google Analytics 4**: 사용자 행동 분석
-- **Google Apps Script**: 서버리스 백엔드
-- **Google Sheets**: 실시간 데이터 대시보드
-- **Custom Analytics System**: 맞춤형 이벤트 추적 시스템
+### Analytics
+- **Google Analytics 4**: 사용자 행동 분석 및 트래킹
 
 ## 📂 프로젝트 구조
 
