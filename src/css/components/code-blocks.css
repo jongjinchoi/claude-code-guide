@@ -114,6 +114,11 @@
     color: inherit;
 }
 
+[data-theme="dark"] .terminal-example.success .terminal-content .output,
+[data-theme="dark"] .terminal-example.error .terminal-content .output {
+    color: #d1d5db; /* 밝은 회색으로 변경 */
+}
+
 [data-theme="dark"] .terminal-content .success-text {
     color: #4ade80;
 }
