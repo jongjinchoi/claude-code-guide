@@ -34,21 +34,40 @@ async function initializeLandingCounter() {
   const counterEl = document.getElementById('successCounter');
   if (!counterEl) return;
   
-  // 사용자 카운터 증가
-  await incrementUserCount();
+  // 1. 마지막 성공한 값을 세션스토리지에서 가져오기
+  const lastKnownCount = sessionStorage.getItem('lastUserCount');
   
-  // Google Sheets에서 실제 사용자 수 가져오기
+  if (lastKnownCount) {
+    // 이전 값이 있으면 바로 표시 (✨ 안 보임)
+    document.getElementById('counter').textContent = parseInt(lastKnownCount).toLocaleString();
+    document.getElementById('counterText').textContent = '명이 여러분과 함께 하고 있어요';
+  } else {
+    // 첫 방문이면 ✨ 표시 (기존 HTML 그대로 유지)
+    // document.getElementById('counter').textContent = '✨';
+    // document.getElementById('counterText').textContent = '명이 여러분과 함께 하고 있어요';
+  }
+  
+  // 2. 백그라운드에서 실제 값 가져오기
+  await incrementUserCount();
   const actualUserCount = await fetchUserCount();
   
-  // 항상 숫자 카운터 표시 (특별한 스타일 유지)
-  // counterEl.removeAttribute('data-special'); // 주석 처리 - 스타일 유지
-  document.getElementById('counter').textContent = '0';
-  document.getElementById('counterText').textContent = '명이 여러분과 함께 하고 있어요';
+  // 3. 세션스토리지 업데이트 (API 성공 시에만)
+  if (actualUserCount > 0) {
+    sessionStorage.setItem('lastUserCount', actualUserCount);
+  }
   
-  // 0부터 올라가는 애니메이션
-  setTimeout(() => {
-    CounterAnimation.animate('counter', actualUserCount, 2000);
-  }, 1200);
+  // 4. 부드러운 전환
+  if (lastKnownCount && parseInt(lastKnownCount) !== actualUserCount) {
+    // 이전 값 → 새 값으로 애니메이션
+    CounterAnimation.animateFromCurrent('counter', actualUserCount, 1000);
+  } else if (!lastKnownCount) {
+    // 첫 방문: 0 → 실제 값
+    document.getElementById('counter').textContent = '0';
+    document.getElementById('counterText').textContent = '명이 여러분과 함께 하고 있어요';
+    setTimeout(() => {
+      CounterAnimation.animate('counter', actualUserCount, 2000);
+    }, 500);
+  }
 }
 
 // 사용자 카운터 증가
