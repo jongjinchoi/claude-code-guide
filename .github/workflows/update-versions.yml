@@ -21,7 +21,7 @@ jobs:
       id: versions
       run: |
         # Claude Code version
-        CLAUDE_VERSION=$(npm view claude-code version)
+        CLAUDE_VERSION=$(npm view @anthropic-ai/claude-code version)
         echo "claude_version=$CLAUDE_VERSION" >> $GITHUB_OUTPUT
         
         # Node.js LTS version
@@ -32,19 +32,30 @@ jobs:
         NPM_VERSION=$(npm view npm version)
         echo "npm_version=$NPM_VERSION" >> $GITHUB_OUTPUT
         
-        # Homebrew version
-        HOMEBREW_VERSION=$(curl -s https://formulae.brew.sh/api/formula/homebrew.json | jq -r '.versions.stable' || echo "4.5.10")
+        # Homebrew version - Get from GitHub releases
+        HOMEBREW_VERSION=$(curl -s https://api.github.com/repos/Homebrew/brew/releases/latest | jq -r '.tag_name' | sed 's/^v//' || echo "4.5.10")
         echo "homebrew_version=$HOMEBREW_VERSION" >> $GITHUB_OUTPUT
         
-        # Git for Windows version
-        GIT_WINDOWS_VERSION=$(curl -s https://api.github.com/repos/git-for-windows/git/releases/latest | jq -r '.tag_name' | sed 's/^v//')
-        echo "git_windows_version=$GIT_WINDOWS_VERSION" >> $GITHUB_OUTPUT
+        # Git for Windows version - Get full version including .windows.X
+        GIT_WINDOWS_FULL=$(curl -s https://api.github.com/repos/git-for-windows/git/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+        # Extract base version (without .windows.X) for display
+        GIT_WINDOWS_BASE=$(echo "$GIT_WINDOWS_FULL" | sed 's/\.windows\.[0-9]*$//')
+        echo "git_windows_full=$GIT_WINDOWS_FULL" >> $GITHUB_OUTPUT
+        echo "git_windows_base=$GIT_WINDOWS_BASE" >> $GITHUB_OUTPUT
+        
+        # Print all versions for debugging
+        echo "Claude Version: $CLAUDE_VERSION"
+        echo "Node Version: $NODE_VERSION"
+        echo "npm Version: $NPM_VERSION"
+        echo "Homebrew Version: $HOMEBREW_VERSION"
+        echo "Git Windows Full Version: $GIT_WINDOWS_FULL"
+        echo "Git Windows Base Version: $GIT_WINDOWS_BASE"
     
     - name: Update version files
       run: |
         # Update guide.html
-        sed -i "s|<span class=\"output claude-version\">claude-code/[0-9.]*</span>|<span class=\"output claude-version\">claude-code/${{ steps.versions.outputs.claude_version }}</span>|g" src/guide.html
-        sed -i "s|<div class=\"result-desc claude-version\">예시: claude-code/[0-9.]*</div>|<div class=\"result-desc claude-version\">예시: claude-code/${{ steps.versions.outputs.claude_version }}</div>|g" src/guide.html
+        sed -i "s|<span class=\"output claude-version\">@anthropic-ai/claude-code/[0-9.]*</span>|<span class=\"output claude-version\">@anthropic-ai/claude-code/${{ steps.versions.outputs.claude_version }}</span>|g" src/guide.html
+        sed -i "s|<div class=\"result-desc claude-version\">예시: @anthropic-ai/claude-code/[0-9.]*</div>|<div class=\"result-desc claude-version\">예시: @anthropic-ai/claude-code/${{ steps.versions.outputs.claude_version }}</div>|g" src/guide.html
         
         sed -i "s|<span class=\"output node-version\">v[0-9.]*</span>|<span class=\"output node-version\">v${{ steps.versions.outputs.node_version }}</span>|g" src/guide.html
         sed -i "s|<div class=\"result-desc node-version\">예시: v[0-9.]*</div>|<div class=\"result-desc node-version\">예시: v${{ steps.versions.outputs.node_version }}</div>|g" src/guide.html
@@ -54,8 +65,8 @@ jobs:
         sed -i "s|<span class=\"output homebrew-version\">Homebrew [0-9.]*</span>|<span class=\"output homebrew-version\">Homebrew ${{ steps.versions.outputs.homebrew_version }}</span>|g" src/guide.html
         sed -i "s|<div class=\"result-desc homebrew-version\">예시: Homebrew [0-9.]*</div>|<div class=\"result-desc homebrew-version\">예시: Homebrew ${{ steps.versions.outputs.homebrew_version }}</div>|g" src/guide.html
         
-        sed -i "s|<span class=\"output git-windows-version\">git version [0-9.]*.windows.1</span>|<span class=\"output git-windows-version\">git version ${{ steps.versions.outputs.git_windows_version }}.windows.1</span>|g" src/guide.html
-        sed -i "s|<div class=\"result-desc git-windows-version\">예: git version [0-9.]*</div>|<div class=\"result-desc git-windows-version\">예: git version ${{ steps.versions.outputs.git_windows_version }}</div>|g" src/guide.html
+        sed -i "s|<span class=\"output git-windows-version\">git version [0-9.]*\.windows\.[0-9]*</span>|<span class=\"output git-windows-version\">git version ${{ steps.versions.outputs.git_windows_full }}</span>|g" src/guide.html
+        sed -i "s|<div class=\"result-desc git-windows-version\">예: git version [0-9.]*</div>|<div class=\"result-desc git-windows-version\">예: git version ${{ steps.versions.outputs.git_windows_base }}</div>|g" src/guide.html
     
     - name: Check for changes
       id: check_changes
@@ -82,7 +93,7 @@ jobs:
           - Node.js: `v${{ steps.versions.outputs.node_version }}`
           - npm: `${{ steps.versions.outputs.npm_version }}`
           - Homebrew: `${{ steps.versions.outputs.homebrew_version }}`
-          - Git for Windows: `${{ steps.versions.outputs.git_windows_version }}`
+          - Git for Windows: `${{ steps.versions.outputs.git_windows_full }}`
           
           ---
           *This PR was automatically generated by the version update workflow.*
