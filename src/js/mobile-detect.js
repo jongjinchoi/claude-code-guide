@@ -160,9 +160,20 @@ class MobileDetector {
                 </div>
                 <h3 class="mobile-warning-title">데스크톱이 필요합니다</h3>
                 <p class="mobile-warning-message">
-                    Claude Code 설치는 데스크톱이 필요합니다.<br>
-                    이 링크를 데스크톱에서 열어주세요.
+                    Claude Code는 터미널 명령어를 실행해야 합니다.<br>
+                    데스크톱 이용을 추천합니다.
                 </p>
+                <div class="mobile-warning-email-section">
+                    <input type="email" 
+                           id="email-input" 
+                           class="mobile-warning-email-input" 
+                           placeholder="이메일 주소 입력"
+                           autocomplete="email">
+                    <button class="mobile-warning-button email-send" onclick="mobileDetector.sendEmail('${window.location.origin}${targetUrl}')">
+                        <i class="fas fa-envelope"></i>
+                        <span>이메일로 보내기</span>
+                    </button>
+                </div>
                 <div class="mobile-warning-actions">
                     <button class="mobile-warning-button copy-link" onclick="mobileDetector.copyLinkToClipboard('${window.location.origin}${targetUrl}')">
                         <i class="fas fa-link"></i>
@@ -253,6 +264,47 @@ class MobileDetector {
             console.error('Failed to copy:', err);
         }
         document.body.removeChild(textArea);
+    }
+
+    /**
+     * Send email with link
+     */
+    sendEmail(url) {
+        const emailInput = document.getElementById('email-input');
+        const email = emailInput ? emailInput.value.trim() : '';
+        
+        if (!email) {
+            emailInput.classList.add('error');
+            emailInput.focus();
+            setTimeout(() => emailInput.classList.remove('error'), 2000);
+            return;
+        }
+        
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            emailInput.classList.add('error');
+            emailInput.focus();
+            setTimeout(() => emailInput.classList.remove('error'), 2000);
+            return;
+        }
+        
+        const subject = encodeURIComponent('Claude Code 설치 가이드');
+        const body = encodeURIComponent(`안녕하세요!\n\nClaude Code 설치 가이드를 공유합니다.\n\n데스크톱에서 아래 링크를 열어주세요:\n${url}\n\n- AI 코딩 도구 Claude Code 설치 가이드\n- 6단계로 쉽게 따라하기`);
+        
+        window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+        
+        // Show success feedback
+        const sendButton = document.querySelector('.mobile-warning-button.email-send');
+        if (sendButton) {
+            const originalHTML = sendButton.innerHTML;
+            sendButton.innerHTML = '<i class="fas fa-check"></i><span>이메일 열림!</span>';
+            sendButton.classList.add('sent');
+            setTimeout(() => {
+                sendButton.innerHTML = originalHTML;
+                sendButton.classList.remove('sent');
+            }, 2000);
+        }
     }
 }
 
