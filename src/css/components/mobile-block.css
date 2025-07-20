@@ -241,8 +241,8 @@ body.mobile-blocked footer {
     display: flex;
     gap: var(--space-2);
     margin-bottom: var(--space-3);
-    width: 280px;
-    max-width: 90%;
+    width: 100%;
+    max-width: 400px;
 }
 
 .mobile-warning-email-input {
@@ -301,8 +301,8 @@ body.mobile-blocked footer {
     gap: var(--space-2);
     justify-content: center;
     margin-bottom: var(--space-3);
-    width: 280px;
-    max-width: 90%;
+    width: 100%;
+    max-width: 400px;
 }
 
 .mobile-warning-button {
@@ -404,6 +404,43 @@ body.mobile-blocked footer {
 [data-theme="dark"] .mobile-warning-button.primary:hover {
     background: rgba(224, 155, 122, 0.1);
     transform: translateY(-1px);
+}
+
+/* Tablet landscape and portrait responsive for warning modal */
+@media (max-width: 1024px) {
+    .mobile-warning-email-section {
+        width: 100%;
+        max-width: 100%;
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+    
+    .mobile-warning-button.email-send {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .mobile-warning-actions {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* Tablet portrait responsive for warning modal */
+@media (max-width: 768px) {
+    .mobile-warning-email-section {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+    
+    .mobile-warning-button.email-send {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .mobile-warning-content {
+        padding: var(--space-4);
+    }
 }
 
 /* Mobile responsive for warning modal buttons */
