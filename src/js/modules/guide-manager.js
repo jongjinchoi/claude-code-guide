@@ -272,6 +272,24 @@ export const GuideManager = {
         });
     },
     
+    getStepNumber(stepName) {
+        const stepMap = {
+            'start': 1, 
+            'start-windows': 1,
+            'homebrew': 2, 
+            'git-windows': 2,
+            'node': 3, 
+            'node-windows': 3,
+            'claude': 4, 
+            'claude-windows': 4,
+            'auth': 5, 
+            'auth-windows': 5,
+            'project': 6, 
+            'project-windows': 6
+        };
+        return stepMap[stepName] || this.completedSteps.size;
+    },
+    
     completeStep(step) {
         this.completedSteps.add(step);
         this.saveProgress();
@@ -284,7 +302,7 @@ export const GuideManager = {
         // Analytics 이벤트 추적
         Analytics.trackEvent('step_completed', {
             step_name: step,
-            step_number: this.completedSteps.size,
+            step_number: this.getStepNumber(step),
             total_steps: this.totalSteps[window.OSDetector?.getCurrentOS() || 'mac'],
             time_on_step: elapsedMinutes
         });
@@ -424,6 +442,7 @@ export const GuideManager = {
             
             // Analytics 가이드 완료 이벤트
             Analytics.trackEvent('guide_completed', {
+                step_number: 6,
                 completion_time_minutes: completionTime,
                 error_count: this.errorSteps.length,
                 os: window.OSDetector?.getCurrentOS() || 'unknown'
