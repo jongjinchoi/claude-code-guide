@@ -199,6 +199,20 @@ export const GuideManager = {
         }
         this.selectedButtons[step] = result;
         
+        // Track button click for analysis
+        if (window.Analytics) {
+            Analytics.trackEvent('button_click', {
+                button_category: 'guide_progress',
+                button_purpose: result === 'success' ? 'confirm_step_success' : 'report_step_error',
+                button_type: 'result_button',
+                step_name: step,
+                step_number: this.getStepNumber(step),
+                result_type: result,
+                is_useful: true,
+                page_path: window.location.pathname
+            });
+        }
+        
         if (result === 'success') {
             // Mark button as selected
             this.markButtonAsSelected(step, button);
@@ -1476,6 +1490,20 @@ window.handleResolutionClick = function(element, step) {
         const icon = element.querySelector('.resolution-check-icon i');
         if (icon) {
             icon.style.display = 'block';
+        }
+        
+        // Track resolution button click
+        if (window.Analytics) {
+            Analytics.trackEvent('button_click', {
+                button_category: 'guide_progress',
+                button_purpose: 'confirm_error_resolved',
+                button_type: 'resolution_button',
+                step_name: step,
+                step_number: GuideManager.getStepNumber(step),
+                completion_type: 'after_error',
+                is_useful: true,
+                page_path: window.location.pathname
+            });
         }
         
         // Mark the error button as selected if it's not already selected

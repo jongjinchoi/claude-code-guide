@@ -139,15 +139,15 @@ class MobileDetector {
         modal.className = 'mobile-warning-modal';
         
         // 직접 접근인 경우 오버레이 클릭 비활성화
-        const overlayClick = isDirectAccess ? '' : 'onclick="mobileDetector.closeMobileWarningModal()"';
+        const overlayClick = isDirectAccess ? '' : 'id="mobile-overlay"';
         
         // 버튼 설정
         const secondButton = isDirectAccess 
-            ? `<button class="mobile-warning-button primary" onclick="window.location.href='/'">
+            ? `<button class="mobile-warning-button primary" id="mobile-home-btn">
                    <i class="fas fa-home"></i>
                    <span>홈으로</span>
                </button>`
-            : `<button class="mobile-warning-button close" onclick="mobileDetector.closeMobileWarningModal()">
+            : `<button class="mobile-warning-button close" id="mobile-close-btn">
                    <i class="fas fa-times"></i>
                    <span>닫기</span>
                </button>`;
@@ -190,6 +190,60 @@ class MobileDetector {
         document.body.appendChild(modal);
         setTimeout(() => modal.classList.add('active'), 10);
         
+        // 버튼 이벤트 리스너 추가
+        setTimeout(() => {
+            // 홈으로 버튼
+            const homeBtn = document.getElementById('mobile-home-btn');
+            if (homeBtn) {
+                homeBtn.addEventListener('click', () => {
+                    if (window.Analytics) {
+                        Analytics.trackEvent('button_click', {
+                            button_category: 'mobile_modal',
+                            button_purpose: 'go_to_home',
+                            button_type: 'home_button',
+                            is_useful: true,
+                            page_path: window.location.pathname
+                        });
+                    }
+                    window.location.href = '/';
+                });
+            }
+            
+            // 닫기 버튼
+            const closeBtn = document.getElementById('mobile-close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    if (window.Analytics) {
+                        Analytics.trackEvent('button_click', {
+                            button_category: 'mobile_modal',
+                            button_purpose: 'close_modal',
+                            button_type: 'close_button',
+                            is_useful: false,
+                            page_path: window.location.pathname
+                        });
+                    }
+                    this.closeMobileWarningModal();
+                });
+            }
+            
+            // 오버레이 클릭 (모달 닫기)
+            const overlay = document.getElementById('mobile-overlay');
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    if (window.Analytics) {
+                        Analytics.trackEvent('button_click', {
+                            button_category: 'mobile_modal',
+                            button_purpose: 'close_modal_overlay',
+                            button_type: 'overlay_click',
+                            is_useful: false,
+                            page_path: window.location.pathname
+                        });
+                    }
+                    this.closeMobileWarningModal();
+                });
+            }
+        }, 50);
+        
         // 직접 접근인 경우 ESC 키 이벤트 핸들러 추가
         if (isDirectAccess) {
             this.isDirectAccessModal = true;
@@ -216,6 +270,18 @@ class MobileDetector {
      * Copy link to clipboard
      */
     copyLinkToClipboard(url) {
+        // Track button click
+        if (window.Analytics) {
+            Analytics.trackEvent('button_click', {
+                button_category: 'mobile_modal',
+                button_purpose: 'copy_desktop_link',
+                button_type: 'copy_link',
+                target_url: url,
+                is_useful: true,
+                page_path: window.location.pathname
+            });
+        }
+        
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(url).then(() => {
                 // Update button text
@@ -287,6 +353,18 @@ class MobileDetector {
             emailInput.focus();
             setTimeout(() => emailInput.classList.remove('error'), 2000);
             return;
+        }
+        
+        // Track button click
+        if (window.Analytics) {
+            Analytics.trackEvent('button_click', {
+                button_category: 'mobile_modal',
+                button_purpose: 'send_desktop_link_email',
+                button_type: 'email_send',
+                target_url: url,
+                is_useful: true,
+                page_path: window.location.pathname
+            });
         }
         
         const subject = encodeURIComponent('Claude Code 설치 가이드');

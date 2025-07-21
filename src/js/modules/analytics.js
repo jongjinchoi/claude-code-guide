@@ -11,7 +11,9 @@ export const Analytics = {
         'page_view',
         'scroll_depth',
         'cta_click',
-        'outbound_click'
+        'outbound_click',
+        'button_click',    // 버튼 추적 데이터
+        'code_copy'        // 코드 복사 추적 데이터
     ],
     
     // 세션 ID (탭마다 고유)
@@ -270,8 +272,20 @@ export const Analytics = {
     // 이벤트 리스너 설정
     setupEventListeners() {
         // CTA 버튼 클릭 추적
-        document.querySelectorAll('.cta-btn, .btn-primary').forEach(btn => {
+        document.querySelectorAll('.cta-button, .cta-btn, .btn-primary, .btn-hero, .btn-hero-primary, .btn-hero-secondary').forEach(btn => {
             btn.addEventListener('click', () => {
+                // 버튼 클릭 이벤트를 button_click으로 통일하고 카테고리로 분류
+                this.trackEvent('button_click', {
+                    button_category: 'cta',
+                    button_purpose: 'start_guide',
+                    button_text: btn.textContent.trim(),
+                    button_location: btn.closest('section')?.className || 'unknown',
+                    button_type: btn.classList.contains('btn-hero-primary') ? 'primary' : 'secondary',
+                    is_useful: true,
+                    page_path: window.location.pathname
+                });
+                
+                // 기존 cta_click 이벤트도 호환성을 위해 유지
                 this.trackEvent('cta_click', {
                     button_text: btn.textContent,
                     button_location: btn.closest('section')?.className || 'unknown'
@@ -287,6 +301,74 @@ export const Analytics = {
                     link_text: link.textContent
                 });
             });
+        });
+        
+        // 버튼 종류별 클릭 추적
+        document.querySelectorAll('button, .btn, [role="button"]').forEach(btn => {
+            // CTA 버튼은 이미 추적되므로 제외
+            if (!btn.classList.contains('cta-button') && !btn.classList.contains('cta-btn') && 
+                !btn.classList.contains('btn-primary') && !btn.classList.contains('btn-hero') &&
+                !btn.classList.contains('btn-hero-primary') && !btn.classList.contains('btn-hero-secondary')) {
+                
+                btn.addEventListener('click', () => {
+                    // 버튼 종류 분류 - 사용자 가치 중심으로 분류
+                    let buttonCategory = 'other';
+                    let buttonPurpose = 'unknown';
+                    let isUseful = false; // 핵심 기능인지 여부
+                    
+                    if (btn.classList.contains('copy-btn')) {
+                        // 코드 복사 버튼은 별도로 처리됨
+                        return;
+                    } else if (btn.classList.contains('complete-step-btn')) {
+                        buttonCategory = 'guide_progress';
+                        buttonPurpose = 'mark_step_complete';
+                        isUseful = true; // 가이드 진행의 핵심
+                    } else if (btn.classList.contains('os-toggle')) {
+                        buttonCategory = 'personalization';
+                        buttonPurpose = 'switch_os_instructions';
+                        isUseful = true; // OS별 명령어 보기
+                    } else if (btn.classList.contains('theme-toggle')) {
+                        buttonCategory = 'personalization';
+                        buttonPurpose = 'toggle_dark_mode';
+                        isUseful = false; // 부가 기능
+                    } else if (btn.classList.contains('font-size-btn')) {
+                        buttonCategory = 'accessibility';
+                        buttonPurpose = btn.id === 'increaseFont' ? 'increase_font' : 'decrease_font';
+                        isUseful = true; // 접근성 향상
+                    } else if (btn.classList.contains('nav-hamburger')) {
+                        buttonCategory = 'navigation';
+                        buttonPurpose = 'open_mobile_menu';
+                        isUseful = false; // 모바일에서만 필요
+                    } else if (btn.classList.contains('mobile-menu-close')) {
+                        buttonCategory = 'navigation';
+                        buttonPurpose = 'close_mobile_menu';
+                        isUseful = false;
+                    } else if (btn.classList.contains('faq-question')) {
+                        buttonCategory = 'content_discovery';
+                        buttonPurpose = 'expand_faq';
+                        isUseful = true; // 정보 탐색
+                    }
+                    
+                    // 현재 상태 추가 (예: 다크모드 on/off)
+                    let currentState = '';
+                    if (buttonPurpose === 'toggle_dark_mode') {
+                        currentState = document.documentElement.dataset.theme === 'dark' ? 'to_light' : 'to_dark';
+                    } else if (buttonPurpose === 'switch_os_instructions') {
+                        currentState = document.querySelector('.guide-content')?.dataset.os || 'unknown';
+                    }
+                    
+                    this.trackEvent('button_click', {
+                        button_category: buttonCategory,
+                        button_purpose: buttonPurpose,
+                        is_useful: isUseful,
+                        current_state: currentState,
+                        button_text: btn.textContent.trim().substring(0, 50),
+                        button_id: btn.id || '',
+                        page_path: window.location.pathname,
+                        user_context: this.getUserContext() // 사용자가 어떤 상황에서 클릭했는지
+                    });
+                });
+            }
         });
         
         // 스크롤 깊이 추적
@@ -342,6 +424,35 @@ export const Analytics = {
             error_source: errorSource,
             page: window.location.pathname
         });
+    },
+    
+    // 사용자 컨텍스트 파악
+    getUserContext() {
+        const context = {
+            // 가이드 페이지에서의 진행 상황
+            guide_progress: 'not_in_guide',
+            // 페이지 체류 시간
+            time_on_page: Math.round((Date.now() - this.pageLoadTime) / 1000),
+            // 스크롤 위치
+            scroll_position: Math.round((window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100),
+            // 디바이스 타입
+            device_type: window.innerWidth <= 768 ? 'mobile' : window.innerWidth <= 1024 ? 'tablet' : 'desktop'
+        };
+        
+        // 가이드 페이지인 경우
+        if (window.location.pathname.includes('guide')) {
+            const currentStep = document.querySelector('.guide-step.active');
+            if (currentStep) {
+                context.guide_progress = currentStep.dataset.step || 'unknown';
+                context.guide_step_id = currentStep.id || 'unknown';
+            }
+            
+            // 완료한 단계 수
+            const completedSteps = document.querySelectorAll('.guide-step.completed').length;
+            context.completed_steps = completedSteps;
+        }
+        
+        return context;
     },
     
     // 세션 시간 추적
