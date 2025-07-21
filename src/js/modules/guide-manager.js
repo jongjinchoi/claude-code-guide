@@ -36,8 +36,10 @@ export const GuideManager = {
         }
         
         // 시작 시간 기록
-        this.startTime = sessionStorage.getItem('guide-start-time');
-        if (!this.startTime) {
+        const savedStartTime = sessionStorage.getItem('guide-start-time');
+        if (savedStartTime) {
+            this.startTime = parseInt(savedStartTime);
+        } else {
             this.startTime = Date.now();
             sessionStorage.setItem('guide-start-time', this.startTime);
         }
@@ -275,11 +277,16 @@ export const GuideManager = {
         this.saveProgress();
         this.updateProgress();
         
+        // 단계별 소요 시간 계산
+        const currentTime = Date.now();
+        const elapsedMinutes = this.startTime ? Math.round((currentTime - this.startTime) / 1000 / 60) : 0;
+        
         // Analytics 이벤트 추적
         Analytics.trackEvent('step_completed', {
             step_name: step,
             step_number: this.completedSteps.size,
-            total_steps: this.totalSteps[window.OSDetector?.getCurrentOS() || 'mac']
+            total_steps: this.totalSteps[window.OSDetector?.getCurrentOS() || 'mac'],
+            time_on_step: elapsedMinutes
         });
         
         // 1단계 완료 시 사용자 카운트 증가
