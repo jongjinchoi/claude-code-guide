@@ -103,10 +103,20 @@ async function fetchUserCount() {
   try {
     const response = await fetch(Analytics.APPS_SCRIPT_URL + '?action=getCounter&metric=users');
     const data = await response.json();
-    return data.value || 62; // 기본값 62 (현재 사용자 수)
+    
+    // API가 유효한 값을 반환했는지 확인
+    if (data.value && data.value > 0) {
+      return data.value;
+    }
+    
+    // API가 실패하면 세션스토리지의 마지막 값 사용
+    const lastKnownCount = sessionStorage.getItem('lastUserCount');
+    return lastKnownCount ? parseInt(lastKnownCount) : 0;
   } catch (error) {
     console.error('사용자 수 가져오기 실패:', error);
-    return 62; // 실패 시 현재 사용자 수 반환
+    // 에러 시에도 세션스토리지의 마지막 값 사용
+    const lastKnownCount = sessionStorage.getItem('lastUserCount');
+    return lastKnownCount ? parseInt(lastKnownCount) : 0;
   }
 }
 
