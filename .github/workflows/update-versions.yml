@@ -1,10 +1,10 @@
 name: Update Software Versions
 
 on:
-  schedule:
-    # Run every day at 00:00 UTC
-    - cron: '0 0 * * *'
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch: # Allow manual trigger only
+  # schedule:
+  #   # Run every day at 00:00 UTC
+  #   - cron: '0 0 * * *'
 
 jobs:
   update-versions:
