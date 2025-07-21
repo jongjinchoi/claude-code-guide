@@ -25,7 +25,7 @@ jobs:
         echo "claude_version=$CLAUDE_VERSION" >> $GITHUB_OUTPUT
         
         # Node.js LTS version
-        NODE_VERSION=$(curl -s https://nodejs.org/dist/index.json | jq -r '[.[] | select(.lts != false)] | .[0].version' | sed 's/^v//')
+        NODE_VERSION=$(curl -s https://nodejs.org/dist/index.json | jq -r '[.[] | select(.lts and .lts != false)] | .[0].version' | sed 's/^v//')
         echo "node_version=$NODE_VERSION" >> $GITHUB_OUTPUT
         
         # npm version
