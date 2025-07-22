@@ -328,12 +328,33 @@ export const GuideManager = {
         const elapsedMinutes = this.startTime ? Math.round((currentTime - this.startTime) / 1000 / 60) : 0;
         
         // Analytics 이벤트 추적
+        const stepNumber = this.getStepNumber(step);
         Analytics.trackEvent('step_completed', {
             step_name: step,
-            step_number: this.getStepNumber(step),
+            step_number: stepNumber,
             total_steps: this.totalSteps[window.OSDetector?.getCurrentOS() || 'mac'],
             time_on_step: elapsedMinutes
         });
+        
+        // 6단계 완료 시 guide_completed 이벤트도 함께 발생
+        if (stepNumber === 6) {
+            const completionTime = this.startTime ? Math.round((Date.now() - this.startTime) / 1000 / 60) : 0;
+            Analytics.trackEvent('guide_completed', {
+                step_number: 6,
+                completion_time_minutes: completionTime,
+                error_count: this.errorSteps.length,
+                os: window.OSDetector?.getCurrentOS() || 'unknown'
+            });
+            
+            // 가이드 완료 카운터 증가
+            const url = 'https://script.google.com/macros/s/AKfycbw9IG4a8jKUPG9s_ouhY6yk8xn3UUP-sDri8wDm9_WGct4cbGsWp6P1X45Ei5DUf-Q5/exec';
+            fetch(`${url}?action=incrementCounter&metric=completions`, {
+                method: 'GET',
+                mode: 'no-cors'
+            }).then(() => {
+                console.log('가이드 완료 카운트 증가 요청 전송됨');
+            });
+        }
         
         // 1단계 완료 시 사용자 카운트 증가
         const stepNames = {
@@ -466,25 +487,7 @@ export const GuideManager = {
             this.scrollToCurrentStep();
         } else {
             // All steps completed
-            const completionTime = this.startTime ? Math.round((Date.now() - this.startTime) / 1000 / 60) : 0;
-            
-            // Analytics 가이드 완료 이벤트
-            Analytics.trackEvent('guide_completed', {
-                step_number: 6,
-                completion_time_minutes: completionTime,
-                error_count: this.errorSteps.length,
-                os: window.OSDetector?.getCurrentOS() || 'unknown'
-            });
-            
-            // 가이드 완료 카운터 증가
-            const url = 'https://script.google.com/macros/s/AKfycbw9IG4a8jKUPG9s_ouhY6yk8xn3UUP-sDri8wDm9_WGct4cbGsWp6P1X45Ei5DUf-Q5/exec';
-            fetch(`${url}?action=incrementCounter&metric=completions`, {
-                method: 'GET',
-                mode: 'no-cors'
-            }).then(() => {
-                console.log('가이드 완료 카운트 증가 요청 전송됨');
-            });
-            
+            // guide_completed 이벤트는 이제 6단계 완료 시 completeStep에서 발생
             this.showCompletionModal();
         }
     },
