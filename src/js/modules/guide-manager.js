@@ -644,6 +644,9 @@ export const GuideManager = {
     },
     
     showCompletionModal() {
+        // Set default emoji to 'good'
+        this.selectedEmoji = 'good';
+        
         // Create and show completion modal
         const modal = document.createElement('div');
         modal.className = 'completion-modal';
@@ -667,12 +670,14 @@ export const GuideManager = {
                         
                         <div class="feedback-emoji-section">
                             <p class="feedback-question">오늘 경험은 어떠셨나요?</p>
+                            <p class="feedback-reason">💡 정말 도움이 되셨다면 <span class="highlight-text">'최고예요!'</span>를 눌러주세요!</p>
                             <div class="emoji-options">
                                 <button class="emoji-btn" data-emoji="love" onclick="GuideManager.handleEmojiClick('love')">
                                     <span class="emoji">😍</span>
                                     <span class="emoji-label">최고예요</span>
+                                    <span class="emoji-click-hint">↑ 클릭</span>
                                 </button>
-                                <button class="emoji-btn" data-emoji="good" onclick="GuideManager.handleEmojiClick('good')">
+                                <button class="emoji-btn selected" data-emoji="good" onclick="GuideManager.handleEmojiClick('good')">
                                     <span class="emoji">😊</span>
                                     <span class="emoji-label">좋아요</span>
                                 </button>
@@ -699,8 +704,18 @@ export const GuideManager = {
                             ></textarea>
                             <button class="feedback-submit-btn" onclick="GuideManager.submitFeedback()">
                                 <i class="fas fa-paper-plane"></i>
-                                전송하기
+                                제작자에게 피드백 남기기
                             </button>
+                            <div class="creator-mini-profile">
+                                <img src="images/profile.jpg" alt="제작자 프로필" class="creator-avatar">
+                                <div class="creator-info">
+                                    <div class="creator-name">👨‍💻 제작자: 진(Jin)</div>
+                                    <div class="creator-message">
+                                        이 가이드가 도움이 되었기를 바랍니다!<br>
+                                        여러분의 피드백이 큰 힘이 됩니다 🙏
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -790,52 +805,20 @@ export const GuideManager = {
         
         // 이모지만 선택한 경우에도 기본 데이터 전송 (good, neutral의 경우)
         if (emoji === 'good' || emoji === 'neutral') {
-            // 프록시 서버를 통한 POST 요청
-            fetch('/api/feedback', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    emoji: emoji,
-                    feedbackText: '',
-                    email: '',
-                    userId: Analytics.getUserId ? Analytics.getUserId() : '',
-                    sessionId: this.sessionId
-                })
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    console.log('Emoji feedback sent successfully');
-                } else {
-                    throw new Error(result.error || 'Failed to submit emoji feedback');
-                }
-            })
-            .catch(err => {
-                console.error('Failed to send emoji feedback:', err);
-                // 실패 시 GET 방식으로 폴백
-                const params = new URLSearchParams({
-                    eventType: 'feedback_submitted',
-                    userId: Analytics.getUserId ? Analytics.getUserId() : '',
-                    sessionId: this.sessionId,
-                    emoji: emoji,
-                    feedbackText: '',
-                    timestamp: new Date().toISOString()
-                });
-                
-                const url = `https://script.google.com/macros/s/AKfycbw9IG4a8jKUPG9s_ouhY6yk8xn3UUP-sDri8wDm9_WGct4cbGsWp6P1X45Ei5DUf-Q5/exec?${params.toString()}`;
-                
-                fetch(url, { mode: 'no-cors' })
-                    .then(() => console.log('Emoji feedback sent via fallback'))
-                    .catch(err => console.error('Fallback also failed:', err));
+            // Analytics 모듈을 통해 이벤트 추적 (Google Sheets로 자동 전송)
+            Analytics.trackEvent('feedback_submitted', {
+                emoji: emoji,
+                feedback_text: '',
+                completion_time: this.startTime ? Math.round((Date.now() - this.startTime) / 1000 / 60) : 0,
+                guide_completed: true
             });
+            
+            console.log('Emoji feedback tracked successfully');
         }
     },
     
     async submitFeedback() {
         const feedbackText = document.getElementById('feedbackText').value.trim();
-        if (!feedbackText) return;
         
         // Log feedback
         console.log('User feedback:', {
@@ -844,65 +827,31 @@ export const GuideManager = {
         });
         
         try {
-            // 프록시 서버를 통한 POST 요청
-            const response = await fetch('/api/feedback', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    emoji: this.selectedEmoji,
-                    feedbackText: feedbackText,
-                    email: '', // 나중에 이메일 입력 필드 추가 시 사용
-                    userId: Analytics.getUserId ? Analytics.getUserId() : '',
-                    sessionId: this.sessionId
-                })
+            // Analytics를 통해 피드백 추적 (Google Sheets로 자동 전송)
+            Analytics.trackEvent('feedback_submitted', {
+                emoji: this.selectedEmoji,
+                feedback_text: feedbackText || '',
+                has_text: feedbackText ? true : false,
+                text_length: feedbackText ? feedbackText.length : 0,
+                completion_time: this.startTime ? Math.round((Date.now() - this.startTime) / 1000 / 60) : 0,
+                guide_completed: true
             });
-
-            const result = await response.json();
             
-            if (result.success) {
-                // Show success message
-                const feedbackSection = document.getElementById('feedbackDetailSection');
-                feedbackSection.innerHTML = `
-                    <div class="feedback-success">
-                        <i class="fas fa-check-circle"></i>
-                        <h3>감사합니다!</h3>
-                        <p>소중한 의견 잘 받았습니다</p>
-                    </div>
-                `;
-                
-                console.log('Feedback submitted successfully:', result);
-            } else {
-                throw new Error(result.error || 'Failed to submit feedback');
-            }
+            // Show success message
+            const feedbackSection = document.getElementById('feedbackDetailSection');
+            feedbackSection.innerHTML = `
+                <div class="feedback-success">
+                    <i class="fas fa-check-circle"></i>
+                    <h3>감사합니다!</h3>
+                    <p>제작자 진(Jin)이 여러분의 소중한 의견을 받았습니다 💌</p>
+                </div>
+            `;
+            
+            console.log('Feedback submitted successfully');
             
         } catch (error) {
-            console.error('Failed to send feedback:', error);
-            
-            // 실패 시 기존 GET 방식으로 폴백
-            const params = new URLSearchParams({
-                eventType: 'feedback_submitted',
-                userId: Analytics.getUserId ? Analytics.getUserId() : '',
-                sessionId: this.sessionId,
-                emoji: this.selectedEmoji,
-                feedbackText: feedbackText,
-                timestamp: new Date().toISOString()
-            });
-            
-            const url = `https://script.google.com/macros/s/AKfycbw9IG4a8jKUPG9s_ouhY6yk8xn3UUP-sDri8wDm9_WGct4cbGsWp6P1X45Ei5DUf-Q5/exec?${params.toString()}`;
-            
-            fetch(url, { mode: 'no-cors' })
-                .then(() => console.log('Feedback sent via fallback'))
-                .catch(err => console.error('Fallback also failed:', err));
+            console.error('Error in submitFeedback:', error);
         }
-        
-        // Analytics 상세 피드백 추적
-        Analytics.trackEvent('feedback_submitted', {
-            emoji: this.selectedEmoji,
-            has_text: feedbackText.length > 0,
-            text_length: feedbackText.length
-        });
     },
     
     handleShare() {

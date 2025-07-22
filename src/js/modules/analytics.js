@@ -156,11 +156,8 @@ export const Analytics = {
             return;
         }
         
-        // feedback_submitted 이벤트는 guide-manager에서 직접 처리하므로 여기서는 GA 트래킹만
-        if (eventName === 'feedback_submitted') {
-            console.log('Feedback tracking handled by guide-manager directly');
-            return;
-        }
+        // feedback_submitted 이벤트도 이제 Google Sheets로 전송
+        // 이전에는 guide-manager에서 직접 처리했지만, 이제는 정상적으로 전송
         
         // 일반 이벤트의 경우 기존 방식대로 처리
         const userId = this.getUserId();
