@@ -125,8 +125,8 @@ export const Analytics = {
             gtag('event', eventName, parameters);
         }
         
-        // Google Sheets에도 동시에 기록 (중요 이벤트만)
-        if (this.isImportantEvent(eventName)) {
+        // Google Sheets에도 동시에 기록 (중요 이벤트 또는 GA_EVENTS_TO_SHEETS에 포함된 이벤트)
+        if (this.isImportantEvent(eventName) || this.GA_EVENTS_TO_SHEETS.includes(eventName)) {
             this.sendToGoogleSheets(eventName, parameters);
         }
     },
