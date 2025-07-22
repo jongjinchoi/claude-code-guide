@@ -280,7 +280,7 @@ export const Analytics = {
                 this.trackEvent('button_click', {
                     button_category: 'cta',
                     button_purpose: 'start_guide',
-                    button_text: btn.textContent.trim(),
+                    button_text: btn.textContent.trim().replace(/\s+/g, ' '),
                     button_location: btn.closest('section')?.className || 'unknown',
                     button_type: btn.classList.contains('btn-hero-primary') ? 'primary' : 'secondary',
                     is_useful: true,
@@ -312,7 +312,12 @@ export const Analytics = {
                 !btn.classList.contains('btn-primary') && !btn.classList.contains('btn-hero') &&
                 !btn.classList.contains('btn-hero-primary') && !btn.classList.contains('btn-hero-secondary')) {
                 
-                btn.addEventListener('click', () => {
+                btn.addEventListener('click', (e) => {
+                    // result-btn은 guide-manager.js에서 처리하므로 제외
+                    if (btn.classList.contains('result-btn')) {
+                        return;
+                    }
+                    
                     // 버튼 종류 분류 - 사용자 가치 중심으로 분류
                     let buttonCategory = 'other';
                     let buttonPurpose = 'unknown';
@@ -364,7 +369,7 @@ export const Analytics = {
                         button_purpose: buttonPurpose,
                         is_useful: isUseful,
                         current_state: currentState,
-                        button_text: btn.textContent.trim().substring(0, 50),
+                        button_text: btn.textContent.trim().replace(/\s+/g, ' ').substring(0, 50),
                         button_id: btn.id || '',
                         page_path: window.location.pathname,
                         user_context: this.getUserContext() // 사용자가 어떤 상황에서 클릭했는지

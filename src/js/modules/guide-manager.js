@@ -201,10 +201,24 @@ export const GuideManager = {
         
         // Track button click for analysis
         if (window.Analytics) {
+            // 버튼의 전체 텍스트 추출 (제목 + 설명)
+            const titleEl = button.querySelector('.result-title');
+            const descEl = button.querySelector('.result-desc');
+            let buttonText = '';
+            
+            if (titleEl && descEl) {
+                // 제목과 설명을 하이픈으로 연결
+                buttonText = `${titleEl.textContent.trim()} - ${descEl.textContent.trim()}`;
+            } else {
+                // 폴백: 전체 텍스트 사용
+                buttonText = button.textContent.trim().replace(/\s+/g, ' ');
+            }
+            
             Analytics.trackEvent('button_click', {
                 button_category: 'guide_progress',
                 button_purpose: result === 'success' ? 'confirm_step_success' : 'report_step_error',
                 button_type: 'result_button',
+                button_text: buttonText,
                 step_name: step,
                 step_number: this.getStepNumber(step),
                 result_type: result,
