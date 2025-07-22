@@ -187,7 +187,9 @@ export const Analytics = {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(data)
-        }).catch(err => console.error('Failed to send to Google Sheets:', err));
+        })
+        .then(() => console.log('Event sent to Google Sheets:', eventName))
+        .catch(err => console.error('Failed to send to Google Sheets:', err));
     },
     
     // 사용자 ID 관리
