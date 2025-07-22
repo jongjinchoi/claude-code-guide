@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize analytics
     Analytics.init();
     
+    // Expose Analytics to window for global access
+    window.Analytics = Analytics;
+    
     initializeFAQ();
 });
 

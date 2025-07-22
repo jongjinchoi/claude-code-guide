@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize analytics
     Analytics.init();
     
+    // Expose Analytics to window for global access
+    window.Analytics = Analytics;
+    
     // Initialize OS detector
     OSDetector.init();
     
