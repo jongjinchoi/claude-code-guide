@@ -13,8 +13,7 @@ export const Analytics = {
         'cta_click',
         'outbound_click',
         'button_click',    // 버튼 추적 데이터
-        'code_copy',       // 코드 복사 추적 데이터
-        'page_exit'        // 페이지 이탈 시 체류 시간 추적
+        'code_copy'        // 코드 복사 추적 데이터
     ],
     
     // 세션 ID (탭마다 고유)
