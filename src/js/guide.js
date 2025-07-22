@@ -17,6 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize analytics
     Analytics.init();
     
+    // Expose Analytics to window for global access
+    window.Analytics = Analytics;
+    
     // Check first visit
     GuideTracker.checkFirstVisit();
     
