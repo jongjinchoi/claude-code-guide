@@ -289,7 +289,7 @@ export const Analytics = {
                 
                 // 기존 cta_click 이벤트도 호환성을 위해 유지
                 this.trackEvent('cta_click', {
-                    button_text: btn.textContent,
+                    button_text: btn.textContent.trim().replace(/\s+/g, ' '),
                     button_location: btn.closest('section')?.className || 'unknown'
                 });
             });
