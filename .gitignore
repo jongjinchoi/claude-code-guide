@@ -125,3 +125,18 @@ google-apps-script/
 
 # Pages directory (old structure)
 pages/
+
+# Supabase 관련
+SUPABASE_SETUP.md
+supabase-setup.sql
+*.sql
+
+# 테스트 관련  
+test-checklist.md
+
+# 로컬 문서
+*_SETUP.md
+
+# 데이터 파일
+sheet_data/
+*.csv
