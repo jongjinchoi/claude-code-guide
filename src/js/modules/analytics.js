@@ -188,6 +188,7 @@ export const Analytics = {
             ...parameters,
             timestamp: new Date().toISOString(),
             pageUrl: window.location.href,
+            page_path: window.location.pathname,  // 경로만 전송 (snake_case로 변경)
             pageTitle: document.title,  // Page_Title 추가
             os: this.getOS(),
             browser: this.getBrowser(),
