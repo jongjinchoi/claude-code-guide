@@ -4,6 +4,7 @@ import { CounterAnimation } from './modules/counter.js';
 import { initVersionUpdater } from './version-updater.js';
 import { Analytics } from './modules/analytics.js';
 import { GuideTracker } from './modules/guideTracker.js';
+import { CacheManager } from './modules/cache-manager.js';
 
 // Initialize theme system immediately
 ThemeManager.init();
@@ -98,26 +99,35 @@ async function incrementUserCount() {
   }
 }
 
-// Apps Script에서 사용자 수 가져오기
+// Apps Script에서 사용자 수 가져오기 (캐싱 적용)
 async function fetchUserCount() {
-  try {
-    const response = await fetch(Analytics.APPS_SCRIPT_URL + '?action=getCounter&metric=users');
-    const data = await response.json();
-    
-    // API가 유효한 값을 반환했는지 확인
-    if (data.value && data.value > 0) {
-      return data.value;
-    }
-    
-    // API가 실패하면 세션스토리지의 마지막 값 사용
-    const lastKnownCount = sessionStorage.getItem('lastUserCount');
-    return lastKnownCount ? parseInt(lastKnownCount) : 0;
-  } catch (error) {
-    console.error('사용자 수 가져오기 실패:', error);
-    // 에러 시에도 세션스토리지의 마지막 값 사용
-    const lastKnownCount = sessionStorage.getItem('lastUserCount');
-    return lastKnownCount ? parseInt(lastKnownCount) : 0;
-  }
+  // 캐싱 시스템을 통해 데이터 가져오기
+  return await CacheManager.get(
+    CacheManager.CACHE_KEYS.USER_COUNT,
+    async () => {
+      try {
+        const response = await fetch(Analytics.APPS_SCRIPT_URL + '?action=getCounter&metric=users');
+        const data = await response.json();
+        
+        // API가 유효한 값을 반환했는지 확인
+        if (data.value && data.value > 0) {
+          // 세션스토리지에도 저장 (빠른 접근용)
+          sessionStorage.setItem('lastUserCount', data.value);
+          return data.value;
+        }
+        
+        // API가 실패하면 세션스토리지의 마지막 값 사용
+        const lastKnownCount = sessionStorage.getItem('lastUserCount');
+        return lastKnownCount ? parseInt(lastKnownCount) : 0;
+      } catch (error) {
+        console.error('사용자 수 가져오기 실패:', error);
+        // 에러 시에도 세션스토리지의 마지막 값 사용
+        const lastKnownCount = sessionStorage.getItem('lastUserCount');
+        return lastKnownCount ? parseInt(lastKnownCount) : 0;
+      }
+    },
+    CacheManager.CACHE_DURATION.COUNTER // 5분 캐싱
+  );
 }
 
 // Theme toggle for landing page

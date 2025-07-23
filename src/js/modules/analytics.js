@@ -1,10 +1,16 @@
 // Google Analytics 4 Integration
+import { BatchAnalytics } from './batch-analytics.js';
+import { CacheManager } from './cache-manager.js';
+
 export const Analytics = {
     // GA4 측정 ID
     GA_MEASUREMENT_ID: 'G-2XGK1CF366',
     
     // Google Apps Script 엔드포인트
     APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwkzkgowI4NVmszGF_bEtkxf82f1M8fRoMn2GYHSua6UT5Ead0vPdhUHFglZJ0S4jZu-A/exec',
+    
+    // 배치 분석 시스템
+    batchAnalytics: null,
     
     // Google Analytics에서 수집할 이벤트 목록
     GA_EVENTS_TO_SHEETS: [
@@ -21,6 +27,13 @@ export const Analytics = {
     
     // 초기화
     init() {
+        // 배치 분석 시스템 초기화
+        this.batchAnalytics = new BatchAnalytics(this.APPS_SCRIPT_URL, {
+            batchSize: 10,
+            batchInterval: 5000,  // 5초
+            maxQueueSize: 50
+        });
+        
         // 세션 ID 생성
         this.sessionId = this.generateSessionId();
         
@@ -127,7 +140,13 @@ export const Analytics = {
         
         // Google Sheets에도 동시에 기록 (중요 이벤트 또는 GA_EVENTS_TO_SHEETS에 포함된 이벤트)
         if (this.isImportantEvent(eventName) || this.GA_EVENTS_TO_SHEETS.includes(eventName)) {
-            this.sendToGoogleSheets(eventName, parameters);
+            // 배치 시스템을 통해 전송
+            if (this.batchAnalytics) {
+                this.batchAnalytics.addEvent(eventName, parameters);
+            } else {
+                // 폴백: 직접 전송
+                this.sendToGoogleSheets(eventName, parameters);
+            }
         }
     },
     
