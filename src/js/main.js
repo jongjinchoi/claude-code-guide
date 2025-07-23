@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   GuideTracker.checkFirstVisit();
   
   // Initialize landing page counter
-  initializeLandingCounter();
+  // initializeLandingCounter(); // 카운터 기능 임시 비활성화 (API 타임아웃 문제)
   
   // Initialize version updater for guide and FAQ pages
   initVersionUpdater();
