@@ -35,45 +35,39 @@ async function initializeLandingCounter() {
   const counterEl = document.getElementById('successCounter');
   if (!counterEl) return;
   
-  // 1. 최신 캐시된 값 또는 기본값 설정
+  // 1. 마지막 성공한 값을 세션스토리지에서 가져오기
   const lastKnownCount = sessionStorage.getItem('lastUserCount');
-  const fallbackCount = getFallbackUserCount();
   
   if (lastKnownCount) {
-    // 이전 값이 있으면 바로 표시
+    // 이전 값이 있으면 바로 표시 (✨ 안 보임)
     document.getElementById('counter').textContent = parseInt(lastKnownCount).toLocaleString();
     document.getElementById('counterText').textContent = '명이 여러분과 함께 하고 있어요';
   } else {
-    // 첫 방문이면 폴백 값 표시
-    document.getElementById('counter').textContent = fallbackCount.toLocaleString();
-    document.getElementById('counterText').textContent = '명이 여러분과 함께 하고 있어요';
+    // 첫 방문이면 ✨ 표시 (기존 HTML 그대로 유지)
+    // document.getElementById('counter').textContent = '✨';
+    // document.getElementById('counterText').textContent = '명이 여러분과 함께 하고 있어요';
   }
   
-  // 2. 백그라운드에서 실제 값 가져오기 (타임아웃 짧게)
-  try {
-    await Promise.race([
-      incrementUserCount(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-    ]);
-    
-    const actualUserCount = await Promise.race([
-      fetchUserCount(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-    ]);
-    
-    // 3. 성공 시에만 업데이트
-    if (actualUserCount > 0) {
-      sessionStorage.setItem('lastUserCount', actualUserCount);
-      
-      // 4. 값이 다르면 부드러운 전환
-      const currentValue = parseInt(document.getElementById('counter').textContent.replace(/,/g, ''));
-      if (currentValue !== actualUserCount) {
-        CounterAnimation.animateFromCurrent('counter', actualUserCount, 1000);
-      }
-    }
-  } catch (error) {
-    console.log('API 연결 제한시간 초과 - 캐시된 값 사용');
-    // 에러 시에도 현재 표시된 값 유지
+  // 2. 백그라운드에서 실제 값 가져오기
+  await incrementUserCount();
+  const actualUserCount = await fetchUserCount();
+  
+  // 3. 세션스토리지 업데이트 (API 성공 시에만)
+  if (actualUserCount > 0) {
+    sessionStorage.setItem('lastUserCount', actualUserCount);
+  }
+  
+  // 4. 부드러운 전환
+  if (lastKnownCount && parseInt(lastKnownCount) !== actualUserCount) {
+    // 이전 값 → 새 값으로 애니메이션
+    CounterAnimation.animateFromCurrent('counter', actualUserCount, 1000);
+  } else if (!lastKnownCount) {
+    // 첫 방문: 0 → 실제 값
+    document.getElementById('counter').textContent = '0';
+    document.getElementById('counterText').textContent = '명이 여러분과 함께 하고 있어요';
+    setTimeout(() => {
+      CounterAnimation.animate('counter', actualUserCount, 2000);
+    }, 500);
   }
 }
 
@@ -130,10 +124,12 @@ async function fetchUserCount() {
         throw new Error('Invalid count received');
         
       } catch (error) {
-        console.log('JSONP 요청 실패, 폴백 값 사용:', error.message);
+        console.error('사용자 수 가져오기 실패:', error);
+        console.log('JSONP URL:', Analytics.APPS_SCRIPT_URL);
         
-        // 폴백 시스템 사용
-        return getFallbackUserCount();
+        // 에러 시에도 세션스토리지의 마지막 값 사용
+        const lastKnownCount = sessionStorage.getItem('lastUserCount');
+        return lastKnownCount ? parseInt(lastKnownCount) : 0;
       }
     },
     CacheManager.CACHE_DURATION.COUNTER // 5분 캐싱
@@ -147,12 +143,15 @@ function fetchUserCountViaJSONP() {
     const timeout = setTimeout(() => {
       cleanup();
       reject(new Error('JSONP timeout'));
-    }, 5000); // 5초 타임아웃
+    }, 10000); // 10초 타임아웃
     
     // 전역 콜백 함수 생성
     window[callbackName] = (data) => {
       cleanup();
-      if (data && data.value) {
+      if (data && data.success && data.value !== undefined) {
+        resolve(data.value);
+      } else if (data && data.value !== undefined) {
+        // success 필드가 없어도 value가 있으면 사용
         resolve(data.value);
       } else {
         reject(new Error('Invalid JSONP response'));
@@ -172,37 +171,15 @@ function fetchUserCountViaJSONP() {
     
     function cleanup() {
       clearTimeout(timeout);
-      if (window[callbackName]) delete window[callbackName];
-      if (script.parentNode) script.parentNode.removeChild(script);
+      // 콜백 삭제를 약간 지연시켜 응답 처리 완료 보장
+      setTimeout(() => {
+        if (window[callbackName]) delete window[callbackName];
+        if (script && script.parentNode) script.parentNode.removeChild(script);
+      }, 100);
     }
     
     document.head.appendChild(script);
   });
-}
-
-// 폴백 사용자 수 계산 (API 실패 시 사용)
-function getFallbackUserCount() {
-  // 1. 세션스토리지에서 마지막 성공 값
-  const lastKnown = sessionStorage.getItem('lastUserCount');
-  if (lastKnown) return parseInt(lastKnown);
-  
-  // 2. 로컬스토리지에서 이전 값
-  const cached = localStorage.getItem('cache_claude_guide_user_count');
-  if (cached) {
-    try {
-      return JSON.parse(cached);
-    } catch (e) {}
-  }
-  
-  // 3. 예상 추정치 (런칭일로부터 계산)
-  const launchDate = new Date('2025-01-19'); // 런칭일
-  const today = new Date();
-  const daysSinceLaunch = Math.floor((today - launchDate) / (1000 * 60 * 60 * 24));
-  
-  // 일일 평균 20명 추정 + 초기 사용자 400명
-  const estimatedCount = 400 + (daysSinceLaunch * 20);
-  
-  return Math.max(estimatedCount, 400); // 최소 400명
 }
 
 // Theme toggle for landing page
