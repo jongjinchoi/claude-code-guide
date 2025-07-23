@@ -17,6 +17,17 @@
       "source": "/pages/faq.html",
       "destination": "/faq.html",
       "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "claude-code-guide-sooty.vercel.app"
+        }
+      ],
+      "destination": "https://getclaudecode.com/:path*",
+      "permanent": true
     }
   ],
   "rewrites": [
