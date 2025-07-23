@@ -8,7 +8,21 @@ export const GuideManager = {
     SHEET_URL: 'https://script.google.com/macros/s/AKfycbwT8THqsbVh89-zpAUHf_nLQ1l468OVDy3xuQPRRca8Wc1QNDgt2Tk98fMUSndtD_pm/exec',
     sessionId: null,
     startTime: null,
+    accumulatedTime: 0,
     errorSteps: [],
+    isProcessingStep: false,
+    isProcessingCompletion: false,
+    
+    // 실제 활동 시간 계산 (누적 시간 + 현재 세션 시간)
+    getTotalActiveTime() {
+        const currentSessionTime = this.startTime ? (Date.now() - this.startTime) : 0;
+        return this.accumulatedTime + currentSessionTime;
+    },
+    
+    // 분 단위로 활동 시간 반환
+    getTotalActiveMinutes() {
+        return Math.round(this.getTotalActiveTime() / 1000 / 60);
+    },
     
     init() {
         this.initSession();
@@ -35,13 +49,44 @@ export const GuideManager = {
             });
         }
         
-        // 시작 시간 기록
-        const savedStartTime = sessionStorage.getItem('guide-start-time');
-        if (savedStartTime) {
-            this.startTime = parseInt(savedStartTime);
+        // 세션 타임아웃 체크 및 시작 시간 기록
+        const savedProgress = localStorage.getItem('claude-guide-progress');
+        const SESSION_TIMEOUT = 30 * 60 * 1000; // 30분
+        
+        if (savedProgress) {
+            const progress = JSON.parse(savedProgress);
+            const timeSinceLastActivity = Date.now() - progress.timestamp;
+            
+            // 30분 이상 비활성 시 새 세션으로 처리
+            if (timeSinceLastActivity > SESSION_TIMEOUT) {
+                // 새 세션 시작
+                this.startTime = Date.now();
+                this.accumulatedTime = 0;
+                sessionStorage.setItem('guide-start-time', this.startTime);
+                sessionStorage.setItem('guide-accumulated-time', '0');
+                console.log('Session timeout - starting new session');
+            } else {
+                // 기존 세션 계속
+                const savedStartTime = sessionStorage.getItem('guide-start-time');
+                const savedAccumulatedTime = sessionStorage.getItem('guide-accumulated-time');
+                
+                if (savedStartTime) {
+                    this.startTime = parseInt(savedStartTime);
+                    this.accumulatedTime = parseInt(savedAccumulatedTime) || 0;
+                } else {
+                    // 세션 스토리지가 없는 경우 (브라우저 재시작 등)
+                    this.startTime = Date.now();
+                    this.accumulatedTime = 0;
+                    sessionStorage.setItem('guide-start-time', this.startTime);
+                    sessionStorage.setItem('guide-accumulated-time', '0');
+                }
+            }
         } else {
+            // 첫 방문
             this.startTime = Date.now();
+            this.accumulatedTime = 0;
             sessionStorage.setItem('guide-start-time', this.startTime);
+            sessionStorage.setItem('guide-accumulated-time', '0');
         }
     },
     
@@ -193,6 +238,19 @@ export const GuideManager = {
     },
     
     handleResultClick(step, result, button) {
+        // 버튼이 이미 disabled 상태면 무시
+        if (button.disabled || button.classList.contains('disabled')) {
+            return;
+        }
+        
+        // 이미 처리 중이면 무시
+        if (this.isProcessingClick) {
+            return;
+        }
+        
+        this.isProcessingClick = true;
+        button.disabled = true;
+        
         // Store selected button
         if (!this.selectedButtons) {
             this.selectedButtons = {};
@@ -259,6 +317,8 @@ export const GuideManager = {
         button.style.transform = 'scale(0.95)';
         setTimeout(() => {
             button.style.transform = '';
+            button.disabled = false;
+            this.isProcessingClick = false;
         }, 150);
     },
     
@@ -319,13 +379,27 @@ export const GuideManager = {
     },
     
     completeStep(step) {
+        // 이미 완료된 단계면 무시 (중복 방지)
+        if (this.completedSteps.has(step)) {
+            console.log('이미 완료된 단계입니다:', step);
+            return;
+        }
+        
+        // 중복 처리 방지를 위한 플래그 체크
+        if (this.isProcessingStep && this.processingStep === step) {
+            console.log('이미 처리 중인 단계입니다:', step);
+            return;
+        }
+        
+        this.isProcessingStep = true;
+        this.processingStep = step;
+        
         this.completedSteps.add(step);
         this.saveProgress();
         this.updateProgress();
         
-        // 단계별 소요 시간 계산
-        const currentTime = Date.now();
-        const elapsedMinutes = this.startTime ? Math.round((currentTime - this.startTime) / 1000 / 60) : 0;
+        // 단계별 소요 시간 계산 (실제 활동 시간)
+        const elapsedMinutes = this.getTotalActiveMinutes();
         
         // Analytics 이벤트 추적
         const stepNumber = this.getStepNumber(step);
@@ -338,7 +412,7 @@ export const GuideManager = {
         
         // 6단계 완료 시 guide_completed 이벤트도 함께 발생
         if (stepNumber === 6) {
-            const completionTime = this.startTime ? Math.round((Date.now() - this.startTime) / 1000 / 60) : 0;
+            const completionTime = this.getTotalActiveMinutes();
             Analytics.trackEvent('guide_completed', {
                 step_number: 6,
                 completion_time_minutes: completionTime,
@@ -441,6 +515,12 @@ export const GuideManager = {
                 this.disableNonSelectedButtons(stepSection, selectedResult);
             }
         }
+        
+        // 처리 완료 후 플래그 해제
+        setTimeout(() => {
+            this.isProcessingStep = false;
+            this.processingStep = null;
+        }, 1000);
     },
     
     goToNextStep() {
@@ -644,6 +724,13 @@ export const GuideManager = {
     },
     
     showCompletionModal() {
+        // 중복 방지
+        if (this.isProcessingCompletion) {
+            console.log('Completion modal already being processed');
+            return;
+        }
+        this.isProcessingCompletion = true;
+        
         // Set default emoji to 'good'
         this.selectedEmoji = 'good';
         
@@ -800,7 +887,7 @@ export const GuideManager = {
         // Analytics 이모지 피드백 추적
         Analytics.trackEvent('feedback_emoji_selected', {
             emoji: emoji,
-            completion_time: this.startTime ? Math.round((Date.now() - this.startTime) / 1000 / 60) : 0
+            completion_time: this.getTotalActiveMinutes()
         });
         
         // 이모지만 선택한 경우에도 기본 데이터 전송 (good, neutral의 경우)
@@ -809,7 +896,7 @@ export const GuideManager = {
             Analytics.trackEvent('feedback_submitted', {
                 emoji: emoji,
                 feedback_text: '',
-                completion_time: this.startTime ? Math.round((Date.now() - this.startTime) / 1000 / 60) : 0,
+                completion_time: this.getTotalActiveMinutes(),
                 guide_completed: true
             });
             
@@ -833,7 +920,7 @@ export const GuideManager = {
                 feedback_text: feedbackText || '',
                 has_text: feedbackText ? true : false,
                 text_length: feedbackText ? feedbackText.length : 0,
-                completion_time: this.startTime ? Math.round((Date.now() - this.startTime) / 1000 / 60) : 0,
+                completion_time: this.getTotalActiveMinutes(),
                 guide_completed: true
             });
             
@@ -990,13 +1077,25 @@ export const GuideManager = {
     },
     
     saveProgress() {
+        // 현재까지의 활동 시간을 누적 시간에 추가
+        if (this.startTime) {
+            const currentSessionTime = Date.now() - this.startTime;
+            this.accumulatedTime += currentSessionTime;
+            sessionStorage.setItem('guide-accumulated-time', this.accumulatedTime.toString());
+            
+            // 새로운 시작 시간 설정 (누적 시간 업데이트 후)
+            this.startTime = Date.now();
+            sessionStorage.setItem('guide-start-time', this.startTime.toString());
+        }
+        
         const os = window.OSDetector?.getCurrentOS() || 'mac';
         const progress = {
             os: os,
             currentStep: this.currentStep,
             completedSteps: Array.from(this.completedSteps),
             selectedButtons: this.selectedButtons || {},
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            accumulatedTime: this.accumulatedTime
         };
         
         localStorage.setItem('claude-guide-progress', JSON.stringify(progress));
