@@ -86,8 +86,23 @@ async function incrementUserCount() {
       return; // 이미 카운트됨
     }
     
-    // Apps Script로 카운터 증가 요청
-    const response = await fetch(Analytics.APPS_SCRIPT_URL + '?action=incrementCounter&metric=users');
+    // Apps Script로 카운터 증가 요청 (타임아웃 추가)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
+    
+    const response = await fetch(Analytics.APPS_SCRIPT_URL + '?action=incrementCounter&metric=users', {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
     const data = await response.json();
     
     if (data.success) {
@@ -95,7 +110,11 @@ async function incrementUserCount() {
       console.log('사용자 카운터 증가:', data.value);
     }
   } catch (error) {
-    console.error('사용자 카운터 증가 실패:', error);
+    if (error.name === 'AbortError') {
+      console.warn('사용자 카운터 요청 타임아웃 (10초)');
+    } else {
+      console.error('사용자 카운터 증가 실패:', error);
+    }
   }
 }
 
@@ -106,7 +125,23 @@ async function fetchUserCount() {
     CacheManager.CACHE_KEYS.USER_COUNT,
     async () => {
       try {
-        const response = await fetch(Analytics.APPS_SCRIPT_URL + '?action=getCounter&metric=users');
+        // 타임아웃 설정
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
+        
+        const response = await fetch(Analytics.APPS_SCRIPT_URL + '?action=getCounter&metric=users', {
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
         
         // API가 유효한 값을 반환했는지 확인
@@ -120,7 +155,11 @@ async function fetchUserCount() {
         const lastKnownCount = sessionStorage.getItem('lastUserCount');
         return lastKnownCount ? parseInt(lastKnownCount) : 0;
       } catch (error) {
-        console.error('사용자 수 가져오기 실패:', error);
+        if (error.name === 'AbortError') {
+          console.warn('사용자 수 조회 요청 타임아웃 (10초)');
+        } else {
+          console.error('사용자 수 가져오기 실패:', error);
+        }
         // 에러 시에도 세션스토리지의 마지막 값 사용
         const lastKnownCount = sessionStorage.getItem('lastUserCount');
         return lastKnownCount ? parseInt(lastKnownCount) : 0;
