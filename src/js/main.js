@@ -177,3 +177,4 @@ function initGuideTracking() {
 // Export for use in other modules
 window.GuideTracker = GuideTracker;
 window.Analytics = Analytics;
+window.CacheManager = CacheManager;
