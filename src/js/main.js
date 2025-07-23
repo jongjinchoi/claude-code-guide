@@ -129,7 +129,24 @@ async function fetchUserCount() {
         
         // 에러 시에도 세션스토리지의 마지막 값 사용
         const lastKnownCount = sessionStorage.getItem('lastUserCount');
-        return lastKnownCount ? parseInt(lastKnownCount) : 0;
+        if (lastKnownCount) {
+          console.log('Using last known count from session:', lastKnownCount);
+          return parseInt(lastKnownCount);
+        }
+        
+        // 세션스토리지에도 없으면 로컬스토리지 확인
+        const cachedData = localStorage.getItem('cache_claude_guide_user_count');
+        if (cachedData) {
+          try {
+            const parsed = JSON.parse(cachedData);
+            console.log('Using cached count:', parsed);
+            return parsed;
+          } catch (e) {
+            console.error('Failed to parse cached data');
+          }
+        }
+        
+        return 0;
       }
     },
     CacheManager.CACHE_DURATION.COUNTER // 5분 캐싱
