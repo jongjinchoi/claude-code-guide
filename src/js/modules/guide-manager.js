@@ -810,7 +810,7 @@ export const GuideManager = {
                 <div class="modal-share-section">
                     <p class="share-question">이 사이트를 친구에게 추천하시겠어요?</p>
                     <div class="share-content">
-                        <div class="share-url">https://claude-code-guide-sooty.vercel.app/</div>
+                        <div class="share-url">https://getclaudecode.com/</div>
                         <button class="share-btn" onclick="GuideManager.handleShare()">
                             <i class="fas fa-share"></i>
                             공유하기
@@ -1013,7 +1013,7 @@ export const GuideManager = {
     },
     
     handleShareAction(action) {
-        const url = 'https://claude-code-guide-sooty.vercel.app/';
+        const url = 'https://getclaudecode.com/';
         const title = 'Claude Code Guide - 초보자를 위한 바이브 코딩의 시작';
         const text = 'Claude Code를 6단계로 간단하게 설치하세요. 터미널이 처음이어도 걱정 없습니다!';
         

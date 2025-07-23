@@ -76,7 +76,7 @@ async function incrementUserCount() {
   try {
     // 프로덕션 사이트가 아니면 카운터 증가하지 않음
     const hostname = window.location.hostname;
-    if (hostname !== 'claude-code-guide-sooty.vercel.app') {
+    if (hostname !== 'getclaudecode.com') {
       console.log('[Counter] Not production - skipping user count');
       return;
     }

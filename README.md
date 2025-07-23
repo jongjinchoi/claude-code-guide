@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://claude-code-guide-sooty.vercel.app/">
+  <a href="https://getclaudecode.com/">
     <img src="https://img.shields.io/badge/Live%20Demo-Visit%20Site-CC785C?style=for-the-badge" alt="Live Demo">
   </a>
 </p>
@@ -117,7 +117,7 @@ VITE_APPS_SCRIPT_URL=your-apps-script-web-app-url
 </p>
 
 <p align="center">
-  <a href="https://claude-code-guide-sooty.vercel.app/">
+  <a href="https://getclaudecode.com/">
     <img src="https://img.shields.io/badge/🚀%20Try%20It%20Now-CC785C?style=for-the-badge" alt="Try It Now">
   </a>
 </p>

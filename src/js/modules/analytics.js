@@ -166,7 +166,7 @@ export const Analytics = {
     sendToGoogleSheets(eventName, parameters) {
         // 실제 프로덕션 사이트가 아니면 전송하지 않음
         const hostname = window.location.hostname;
-        const isProduction = hostname === 'claude-code-guide-sooty.vercel.app';
+        const isProduction = hostname === 'getclaudecode.com';
         const isLocalDev = hostname === 'localhost' || hostname === '127.0.0.1';
         
         // 프로덕션이 아니면 로그만 출력하고 전송하지 않음
