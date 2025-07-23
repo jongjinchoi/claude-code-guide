@@ -59,6 +59,9 @@ export const Analytics = {
         
         // Duration 추적 설정
         this.setupDurationTracking();
+        
+        // 온라인 상태 모니터링 및 실패한 이벤트 재전송
+        this.setupOnlineStatusMonitoring();
     },
     
     // 세션 ID 생성
@@ -143,8 +146,8 @@ export const Analytics = {
             gtag('event', eventName, parameters);
         }
         
-        // Google Sheets에도 동시에 기록 (중요 이벤트 또는 GA_EVENTS_TO_SHEETS에 포함된 이벤트)
-        if (this.isImportantEvent(eventName) || this.GA_EVENTS_TO_SHEETS.includes(eventName)) {
+        // Supabase/Google Sheets로 전송할 이벤트 판단
+        if (this.shouldSendToBackend(eventName)) {
             // 배치 시스템을 통해 전송
             if (this.batchAnalytics) {
                 this.batchAnalytics.addEvent(eventName, parameters);
@@ -155,7 +158,28 @@ export const Analytics = {
         }
     },
     
-    // 중요 이벤트 판단
+    // 백엔드(Supabase/Google Sheets)로 전송할 이벤트 판단
+    shouldSendToBackend(eventName) {
+        // GA_EVENTS_TO_SHEETS와 중요 이벤트를 모두 포함
+        const allBackendEvents = [
+            // GA_EVENTS_TO_SHEETS 배열의 이벤트들
+            ...this.GA_EVENTS_TO_SHEETS,
+            // 추가 중요 이벤트들
+            'guide_started',
+            'guide_completed',
+            'step_completed',
+            'error_occurred',
+            'feedback_submitted',
+            'session_end',
+            'page_exit'
+        ];
+        
+        // 중복 제거
+        const uniqueEvents = [...new Set(allBackendEvents)];
+        return uniqueEvents.includes(eventName);
+    },
+    
+    // 중요 이벤트 판단 (레거시 호환성을 위해 유지)
     isImportantEvent(eventName) {
         const importantEvents = [
             'guide_started',
@@ -203,12 +227,10 @@ export const Analytics = {
             try {
                 // Supabase 형식에 맞게 데이터 변환
                 const supabaseData = this.convertToSupabaseFormat(eventName, data);
-                const result = await AnalyticsAPI.trackEvent(supabaseData);
+                const result = await this.trackEventWithRetry(supabaseData, eventName);
                 
-                if (result.success) {
-                    console.log('Event sent to Supabase:', eventName);
-                } else {
-                    throw new Error('Supabase tracking failed');
+                if (!result.success) {
+                    throw new Error('Supabase tracking failed after retries');
                 }
             } catch (error) {
                 console.error('Supabase error, falling back to Google Sheets:', error);
@@ -218,6 +240,50 @@ export const Analytics = {
         } else {
             // Google Apps Script로 직접 전송
             this.sendToGoogleSheetsLegacy(data);
+        }
+    },
+    
+    // 재시도 메커니즘을 포함한 이벤트 전송
+    async trackEventWithRetry(eventData, eventName, retries = 3) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const result = await AnalyticsAPI.trackEvent(eventData);
+                if (result.success) {
+                    console.log(`Event sent to Supabase (attempt ${i + 1}):`, eventName);
+                    return result;
+                }
+            } catch (error) {
+                console.warn(`Supabase attempt ${i + 1} failed:`, error);
+            }
+            
+            // 마지막 시도가 아닌 경우 지수 백오프로 대기
+            if (i < retries - 1) {
+                await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+            }
+        }
+        
+        // 모든 재시도 실패 시 로컬에 저장
+        this.saveToFailedQueue(eventData);
+        return { success: false, error: 'All retries failed' };
+    },
+    
+    // 실패한 이벤트를 로컬 스토리지에 저장
+    saveToFailedQueue(event) {
+        try {
+            const failedEvents = JSON.parse(localStorage.getItem('failed_supabase_events') || '[]');
+            // 최대 100개까지만 저장 (메모리 제한)
+            if (failedEvents.length >= 100) {
+                failedEvents.shift(); // 가장 오래된 이벤트 제거
+            }
+            failedEvents.push({
+                ...event,
+                failed_at: new Date().toISOString(),
+                retry_count: 0
+            });
+            localStorage.setItem('failed_supabase_events', JSON.stringify(failedEvents));
+            console.log('Event saved to failed queue:', event.event_name);
+        } catch (error) {
+            console.error('Failed to save event to local storage:', error);
         }
     },
     
@@ -239,7 +305,7 @@ export const Analytics = {
     convertToSupabaseFormat(eventName, data) {
         const isNewUser = localStorage.getItem('claude_guide_user_id') ? false : true;
         
-        return {
+        const supabaseData = {
             timestamp: data.timestamp,
             event_category: this.extractEventCategory(eventName),
             event_name: eventName,
@@ -267,6 +333,64 @@ export const Analytics = {
             feedback_text: data.feedback || null,
             total_time_minutes: data.completion_time_minutes || data.total_duration || null
         };
+        
+        return this.validateSupabaseData(supabaseData);
+    },
+    
+    // Supabase 데이터 검증 및 정리
+    validateSupabaseData(data) {
+        // 필수 필드 확인 및 기본값 설정
+        data.timestamp = data.timestamp || new Date().toISOString();
+        data.guide_progress = data.guide_progress === undefined ? null : 
+                             (data.guide_progress === null ? null : Number(data.guide_progress));
+        data.interaction_count = 1;
+        
+        // 문자열 길이 제한 (PostgreSQL VARCHAR 제한 고려)
+        const stringFields = [
+            { field: 'event_category', maxLength: 50 },
+            { field: 'event_name', maxLength: 100 },
+            { field: 'user_id', maxLength: 50 },
+            { field: 'session_id', maxLength: 50 },
+            { field: 'page_path', maxLength: 255 },
+            { field: 'referrer_source', maxLength: 100 },
+            { field: 'referrer_medium', maxLength: 50 },
+            { field: 'guide_step_name', maxLength: 100 },
+            { field: 'action_type', maxLength: 50 },
+            { field: 'action_target', maxLength: 255 },
+            { field: 'action_value', maxLength: 100 },
+            { field: 'device_category', maxLength: 50 },
+            { field: 'os', maxLength: 50 },
+            { field: 'browser', maxLength: 50 },
+            { field: 'error_type', maxLength: 100 },
+            { field: 'error_message', maxLength: 255 },
+            { field: 'feedback_text', maxLength: 1000 }
+        ];
+        
+        stringFields.forEach(({ field, maxLength }) => {
+            if (data[field] && typeof data[field] === 'string' && data[field].length > maxLength) {
+                data[field] = data[field].substring(0, maxLength);
+            }
+        });
+        
+        // 숫자 필드 검증
+        if (data.guide_step_number !== null && data.guide_step_number !== undefined) {
+            data.guide_step_number = parseInt(data.guide_step_number) || null;
+        }
+        if (data.time_on_step !== null && data.time_on_step !== undefined) {
+            data.time_on_step = parseInt(data.time_on_step) || null;
+        }
+        if (data.feedback_score !== null && data.feedback_score !== undefined) {
+            data.feedback_score = parseInt(data.feedback_score) || null;
+        }
+        if (data.total_time_minutes !== null && data.total_time_minutes !== undefined) {
+            data.total_time_minutes = parseFloat(data.total_time_minutes) || null;
+        }
+        
+        // Boolean 필드 확인
+        data.is_new_user = Boolean(data.is_new_user);
+        data.is_success = Boolean(data.is_success);
+        
+        return data;
     },
     
     // 이벤트 카테고리 추출
@@ -607,6 +731,83 @@ export const Analytics = {
                 navigator.sendBeacon(this.APPS_SCRIPT_URL, data);
             }
         });
+    },
+    
+    // 온라인 상태 모니터링 설정
+    setupOnlineStatusMonitoring() {
+        // 온라인 복귀 시 실패한 이벤트 재전송
+        window.addEventListener('online', () => {
+            console.log('Network connection restored, retrying failed events...');
+            this.retryFailedEvents();
+        });
+        
+        // 페이지 로드 시 실패한 이벤트가 있다면 재시도
+        if (navigator.onLine) {
+            setTimeout(() => this.retryFailedEvents(), 5000); // 5초 후 재시도
+        }
+    },
+    
+    // 실패한 이벤트 재전송
+    async retryFailedEvents() {
+        if (!this.USE_SUPABASE) return;
+        
+        try {
+            const failedEvents = JSON.parse(localStorage.getItem('failed_supabase_events') || '[]');
+            if (failedEvents.length === 0) return;
+            
+            console.log(`Retrying ${failedEvents.length} failed events...`);
+            const retryResults = [];
+            
+            // 배치로 재전송 (최대 10개씩)
+            const batchSize = 10;
+            for (let i = 0; i < failedEvents.length; i += batchSize) {
+                const batch = failedEvents.slice(i, i + batchSize);
+                
+                for (const failedEvent of batch) {
+                    try {
+                        // retry_count 증가
+                        failedEvent.retry_count = (failedEvent.retry_count || 0) + 1;
+                        
+                        // 최대 재시도 횟수 초과 시 스킵
+                        if (failedEvent.retry_count > 5) {
+                            console.log('Max retries exceeded for event:', failedEvent.event_name);
+                            continue;
+                        }
+                        
+                        // failed_at과 retry_count 제거하고 전송
+                        const { failed_at, retry_count, ...eventData } = failedEvent;
+                        
+                        const result = await AnalyticsAPI.trackEvent(eventData);
+                        if (result.success) {
+                            retryResults.push({ success: true, event: failedEvent });
+                        } else {
+                            retryResults.push({ success: false, event: failedEvent });
+                        }
+                    } catch (error) {
+                        console.error('Failed to retry event:', error);
+                        retryResults.push({ success: false, event: failedEvent });
+                    }
+                    
+                    // 각 요청 사이에 짧은 대기
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+            
+            // 성공한 이벤트 제거, 실패한 이벤트는 유지
+            const remainingFailedEvents = failedEvents.filter((event, index) => {
+                const result = retryResults.find(r => r.event === event);
+                return !result || !result.success;
+            });
+            
+            // 업데이트된 실패 큐 저장
+            localStorage.setItem('failed_supabase_events', JSON.stringify(remainingFailedEvents));
+            
+            const successCount = retryResults.filter(r => r.success).length;
+            console.log(`Retry complete: ${successCount}/${failedEvents.length} events sent successfully`);
+            
+        } catch (error) {
+            console.error('Error retrying failed events:', error);
+        }
     }
 };
 
