@@ -1,13 +1,17 @@
 // Google Analytics 4 Integration
 import { BatchAnalytics } from './batch-analytics.js';
 import { CacheManager } from './cache-manager.js';
+import { AnalyticsAPI } from './supabase-client.js';
 
 export const Analytics = {
     // GA4 측정 ID
     GA_MEASUREMENT_ID: 'G-2XGK1CF366',
     
-    // Google Apps Script 엔드포인트
+    // Google Apps Script 엔드포인트 (백업용)
     APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwkzkgowI4NVmszGF_bEtkxf82f1M8fRoMn2GYHSua6UT5Ead0vPdhUHFglZJ0S4jZu-A/exec',
+    
+    // Supabase 사용 여부
+    USE_SUPABASE: true,
     
     // 배치 분석 시스템
     batchAnalytics: null,
@@ -31,7 +35,8 @@ export const Analytics = {
         this.batchAnalytics = new BatchAnalytics(this.APPS_SCRIPT_URL, {
             batchSize: 10,
             batchInterval: 5000,  // 5초
-            maxQueueSize: 50
+            maxQueueSize: 50,
+            useSupabase: this.USE_SUPABASE
         });
         
         // 세션 ID 생성
@@ -162,8 +167,8 @@ export const Analytics = {
         return importantEvents.includes(eventName);
     },
     
-    // Google Sheets로 데이터 전송
-    sendToGoogleSheets(eventName, parameters) {
+    // Google Sheets로 데이터 전송 (Supabase로 마이그레이션)
+    async sendToGoogleSheets(eventName, parameters) {
         // 실제 프로덕션 사이트가 아니면 전송하지 않음
         const hostname = window.location.hostname;
         const isProduction = hostname === 'getclaudecode.com';
@@ -175,9 +180,6 @@ export const Analytics = {
             return;
         }
         
-        // feedback_submitted 이벤트도 이제 Google Sheets로 전송
-        // 이전에는 guide-manager에서 직접 처리했지만, 이제는 정상적으로 전송
-        
         // 일반 이벤트의 경우 기존 방식대로 처리
         const userId = this.getUserId();
         
@@ -188,15 +190,39 @@ export const Analytics = {
             ...parameters,
             timestamp: new Date().toISOString(),
             pageUrl: window.location.href,
-            page_path: window.location.pathname,  // 경로만 전송 (snake_case로 변경)
-            pageTitle: document.title,  // Page_Title 추가
+            page_path: window.location.pathname,
+            pageTitle: document.title,
             os: this.getOS(),
             browser: this.getBrowser(),
             device: this.getDevice(),
             referrer: this.getReferrer()
         };
         
-        // Apps Script 엔드포인트로 전송
+        // Supabase로 전송 시도
+        if (this.USE_SUPABASE) {
+            try {
+                // Supabase 형식에 맞게 데이터 변환
+                const supabaseData = this.convertToSupabaseFormat(eventName, data);
+                const result = await AnalyticsAPI.trackEvent(supabaseData);
+                
+                if (result.success) {
+                    console.log('Event sent to Supabase:', eventName);
+                } else {
+                    throw new Error('Supabase tracking failed');
+                }
+            } catch (error) {
+                console.error('Supabase error, falling back to Google Sheets:', error);
+                // 폴백: Google Apps Script로 전송
+                this.sendToGoogleSheetsLegacy(data);
+            }
+        } else {
+            // Google Apps Script로 직접 전송
+            this.sendToGoogleSheetsLegacy(data);
+        }
+    },
+    
+    // 레거시 Google Sheets 전송 메서드
+    sendToGoogleSheetsLegacy(data) {
         fetch(this.APPS_SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
@@ -205,8 +231,90 @@ export const Analytics = {
             },
             body: JSON.stringify(data)
         })
-        .then(() => console.log('Event sent to Google Sheets:', eventName))
+        .then(() => console.log('Event sent to Google Sheets:', data.eventType))
         .catch(err => console.error('Failed to send to Google Sheets:', err));
+    },
+    
+    // Supabase 형식으로 데이터 변환
+    convertToSupabaseFormat(eventName, data) {
+        const isNewUser = localStorage.getItem('claude_guide_user_id') ? false : true;
+        
+        return {
+            timestamp: data.timestamp,
+            event_category: this.extractEventCategory(eventName),
+            event_name: eventName,
+            user_id: data.userId,
+            session_id: data.sessionId,
+            is_new_user: isNewUser,
+            page_path: data.page_path,
+            referrer_source: this.extractReferrerSource(data.referrer),
+            referrer_medium: this.extractReferrerMedium(data.referrer),
+            guide_step_number: data.step_number || null,
+            guide_step_name: data.step_name || null,
+            guide_progress: data.progress || null,
+            time_on_step: data.time_on_step || null,
+            action_type: data.button_purpose || data.button_type || null,
+            action_target: data.button_text || data.button_id || data.button_location || null,
+            action_value: data.button_category || data.code_category || null,
+            interaction_count: 1,
+            device_category: data.device,
+            os: data.os,
+            browser: data.browser,
+            is_success: data.error_type ? false : true,
+            error_type: data.error_type || null,
+            error_message: data.error_message || null,
+            feedback_score: data.emoji ? this.emojiToScore(data.emoji) : null,
+            feedback_text: data.feedback || null,
+            total_time_minutes: data.completion_time_minutes || data.total_duration || null
+        };
+    },
+    
+    // 이벤트 카테고리 추출
+    extractEventCategory(eventType) {
+        if (eventType.includes('guide')) return 'guide';
+        if (eventType.includes('page')) return 'page';
+        if (eventType.includes('error')) return 'error';
+        if (eventType.includes('feedback')) return 'feedback';
+        if (eventType.includes('session')) return 'session';
+        if (['cta_click', 'button_click', 'code_copy', 'scroll_depth', 'outbound_click'].includes(eventType)) return 'interaction';
+        return 'other';
+    },
+    
+    // Referrer 소스 추출
+    extractReferrerSource(referrer) {
+        if (!referrer || referrer === 'Direct') return 'direct';
+        try {
+            const url = new URL(referrer);
+            const hostname = url.hostname.toLowerCase();
+            if (hostname.includes('google')) return 'google';
+            if (hostname.includes('facebook')) return 'facebook';
+            if (hostname.includes('twitter')) return 'twitter';
+            if (hostname.includes('github')) return 'github';
+            return hostname;
+        } catch {
+            return 'other';
+        }
+    },
+    
+    // Referrer 매체 추출
+    extractReferrerMedium(referrer) {
+        if (!referrer || referrer === 'Direct') return 'none';
+        try {
+            const url = new URL(referrer);
+            const hostname = url.hostname.toLowerCase();
+            if (hostname.includes('google')) return 'organic';
+            if (hostname.includes('facebook') || hostname.includes('twitter') || hostname.includes('linkedin')) return 'social';
+            if (hostname.includes('github')) return 'referral';
+            return 'referral';
+        } catch {
+            return 'unknown';
+        }
+    },
+    
+    // 이모지를 점수로 변환
+    emojiToScore(emoji) {
+        const scores = { '😡': 1, '😟': 2, '😐': 3, '😊': 4, '😍': 5 };
+        return scores[emoji] || 0;
     },
     
     // 사용자 ID 관리

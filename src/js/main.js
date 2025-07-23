@@ -5,6 +5,7 @@ import { initVersionUpdater } from './version-updater.js';
 import { Analytics } from './modules/analytics.js';
 import { GuideTracker } from './modules/guideTracker.js';
 import { CacheManager } from './modules/cache-manager.js';
+import { CounterAPI } from './modules/supabase-client.js';
 
 // Initialize theme system immediately
 ThemeManager.init();
@@ -18,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   GuideTracker.checkFirstVisit();
   
   // Initialize landing page counter
-  // initializeLandingCounter(); // 카운터 기능 임시 비활성화 (API 타임아웃 문제)
+  initializeLandingCounter(); // 카운터 기능 활성화 (Google Sheets J1 셀에서 읽기)
   
   // Initialize version updater for guide and FAQ pages
   initVersionUpdater();
@@ -94,9 +95,19 @@ async function incrementUserCount() {
       });
     }
     
-    // Apps Script 대신 간단한 이미지 요청 사용 (CORS 우회)
-    const img = new Image();
-    img.src = Analytics.APPS_SCRIPT_URL + '?action=incrementCounter&metric=users&t=' + Date.now();
+    try {
+      // Supabase로 카운터 증가
+      const newCount = await CounterAPI.increment();
+      if (newCount) {
+        console.log('Counter incremented via Supabase:', newCount);
+        sessionStorage.setItem('lastUserCount', newCount);
+      }
+    } catch (supabaseError) {
+      console.log('Supabase increment failed, falling back to Google Apps Script');
+      // 폴백: Apps Script 대신 간단한 이미지 요청 사용 (CORS 우회)
+      const img = new Image();
+      img.src = Analytics.APPS_SCRIPT_URL + '?action=incrementCounter&metric=users&t=' + Date.now();
+    }
     
     // 즉시 카운트 완료로 처리 (네트워크 상관없이)
     sessionStorage.setItem('userCounted', 'true');
@@ -107,25 +118,33 @@ async function incrementUserCount() {
   }
 }
 
-// Apps Script에서 사용자 수 가져오기 (CORS 문제로 JSONP 사용)
+// Supabase에서 사용자 수 가져오기
 async function fetchUserCount() {
   return await CacheManager.get(
     CacheManager.CACHE_KEYS.USER_COUNT,
     async () => {
       try {
-        // JSONP를 사용하여 CORS 문제 우회
-        const count = await fetchUserCountViaJSONP();
+        // Supabase에서 카운터 값 가져오기
+        const count = await CounterAPI.getCount();
         
         if (count && count > 0) {
           sessionStorage.setItem('lastUserCount', count);
           return count;
         }
         
-        throw new Error('Invalid count received');
+        // Supabase가 실패하면 JSONP 폴백
+        console.log('Supabase failed, falling back to JSONP');
+        const jsonpCount = await fetchUserCountViaJSONP();
+        
+        if (jsonpCount && jsonpCount > 0) {
+          sessionStorage.setItem('lastUserCount', jsonpCount);
+          return jsonpCount;
+        }
+        
+        throw new Error('Both Supabase and JSONP failed');
         
       } catch (error) {
         console.error('사용자 수 가져오기 실패:', error);
-        console.log('JSONP URL:', Analytics.APPS_SCRIPT_URL);
         
         // 에러 시에도 세션스토리지의 마지막 값 사용
         const lastKnownCount = sessionStorage.getItem('lastUserCount');

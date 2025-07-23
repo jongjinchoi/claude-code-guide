@@ -1,6 +1,8 @@
 // Batch Analytics System for Google Sheets
 // 여러 이벤트를 모아서 한 번에 전송하여 API 요청 수를 줄입니다
 
+import { AnalyticsAPI } from './supabase-client.js';
+
 export class BatchAnalytics {
     constructor(appsScriptUrl, options = {}) {
         this.appsScriptUrl = appsScriptUrl;
@@ -9,6 +11,7 @@ export class BatchAnalytics {
         this.batchInterval = options.batchInterval || 5000; // 5초
         this.maxQueueSize = options.maxQueueSize || 50;
         this.isProcessing = false;
+        this.useSupabase = options.useSupabase !== false; // 기본값 true
         
         // 중요 이벤트는 즉시 전송
         this.highPriorityEvents = [
@@ -83,6 +86,32 @@ export class BatchAnalytics {
     
     // 배치 전송
     async sendBatch(batch) {
+        // Supabase 사용 시
+        if (this.useSupabase) {
+            try {
+                // Supabase 형식으로 변환
+                const supabaseEvents = batch.map(event => this.convertToSupabaseFormat(event));
+                const result = await AnalyticsAPI.trackBatchEvents(supabaseEvents);
+                
+                if (result.success) {
+                    console.log('Batch sent to Supabase:', batch.length, 'events');
+                    return true;
+                } else {
+                    throw new Error('Supabase batch tracking failed');
+                }
+            } catch (error) {
+                console.error('Supabase batch error, falling back to Google Sheets:', error);
+                // 폴백: Google Apps Script로 전송
+                return await this.sendBatchLegacy(batch);
+            }
+        } else {
+            // Google Apps Script로 직접 전송
+            return await this.sendBatchLegacy(batch);
+        }
+    }
+    
+    // 레거시 Google Sheets 배치 전송
+    async sendBatchLegacy(batch) {
         const payload = {
             batch: batch,
             batchId: this.generateBatchId(),
@@ -100,6 +129,111 @@ export class BatchAnalytics {
         
         // no-cors 모드에서는 응답을 읽을 수 없으므로 성공으로 간주
         return true;
+    }
+    
+    // Supabase 형식으로 변환
+    convertToSupabaseFormat(event) {
+        const { eventName, parameters, timestamp, userId, sessionId } = event;
+        
+        return {
+            timestamp: timestamp,
+            event_category: this.extractEventCategory(eventName),
+            event_name: eventName,
+            user_id: userId,
+            session_id: sessionId,
+            is_new_user: parameters.customData?.firstVisit || false,
+            page_path: parameters.page_path || window.location.pathname,
+            referrer_source: this.extractReferrerSource(parameters.referrer),
+            referrer_medium: this.extractReferrerMedium(parameters.referrer),
+            guide_step_number: parameters.step_number || null,
+            guide_step_name: parameters.step_name || null,
+            guide_progress: parameters.progress || null,
+            time_on_step: parameters.time_on_step || null,
+            action_type: parameters.button_purpose || parameters.button_type || null,
+            action_target: parameters.button_text || parameters.button_id || null,
+            action_value: parameters.button_category || parameters.code_category || null,
+            interaction_count: 1,
+            device_category: parameters.device || this.getDevice(),
+            os: parameters.os || this.getOS(),
+            browser: parameters.browser || this.getBrowser(),
+            is_success: !parameters.error_type,
+            error_type: parameters.error_type || null,
+            error_message: parameters.error_message || null,
+            feedback_score: parameters.emoji ? this.emojiToScore(parameters.emoji) : null,
+            feedback_text: parameters.feedback || null,
+            total_time_minutes: parameters.completion_time_minutes || null
+        };
+    }
+    
+    // 헬퍼 메서드들 추가
+    extractEventCategory(eventType) {
+        if (eventType.includes('guide')) return 'guide';
+        if (eventType.includes('page')) return 'page';
+        if (eventType.includes('error')) return 'error';
+        if (eventType.includes('feedback')) return 'feedback';
+        if (eventType.includes('session')) return 'session';
+        if (['cta_click', 'button_click', 'code_copy', 'scroll_depth', 'outbound_click'].includes(eventType)) return 'interaction';
+        return 'other';
+    }
+    
+    extractReferrerSource(referrer) {
+        if (!referrer || referrer === 'Direct') return 'direct';
+        try {
+            const url = new URL(referrer);
+            const hostname = url.hostname.toLowerCase();
+            if (hostname.includes('google')) return 'google';
+            if (hostname.includes('facebook')) return 'facebook';
+            if (hostname.includes('twitter')) return 'twitter';
+            if (hostname.includes('github')) return 'github';
+            return hostname;
+        } catch {
+            return 'other';
+        }
+    }
+    
+    extractReferrerMedium(referrer) {
+        if (!referrer || referrer === 'Direct') return 'none';
+        try {
+            const url = new URL(referrer);
+            const hostname = url.hostname.toLowerCase();
+            if (hostname.includes('google')) return 'organic';
+            if (hostname.includes('facebook') || hostname.includes('twitter') || hostname.includes('linkedin')) return 'social';
+            if (hostname.includes('github')) return 'referral';
+            return 'referral';
+        } catch {
+            return 'unknown';
+        }
+    }
+    
+    emojiToScore(emoji) {
+        const scores = { '😡': 1, '😟': 2, '😐': 3, '😊': 4, '😍': 5 };
+        return scores[emoji] || 0;
+    }
+    
+    getDevice() {
+        const userAgent = navigator.userAgent;
+        if (/tablet|ipad|playbook|silk/i.test(userAgent)) return 'Tablet';
+        if (/mobile|iphone|ipod|android|blackberry|opera|mini|windows\sce|palm|smartphone|iemobile/i.test(userAgent)) return 'Mobile';
+        return 'Desktop';
+    }
+    
+    getOS() {
+        const userAgent = navigator.userAgent;
+        if (userAgent.indexOf('Win') !== -1) return 'Windows';
+        if (userAgent.indexOf('Mac') !== -1) return 'MacOS';
+        if (userAgent.indexOf('Linux') !== -1) return 'Linux';
+        if (userAgent.indexOf('Android') !== -1) return 'Android';
+        if (userAgent.indexOf('iOS') !== -1) return 'iOS';
+        return 'Unknown';
+    }
+    
+    getBrowser() {
+        const userAgent = navigator.userAgent;
+        if (userAgent.indexOf('Chrome') !== -1 && userAgent.indexOf('Edg') === -1) return 'Chrome';
+        if (userAgent.indexOf('Safari') !== -1 && userAgent.indexOf('Chrome') === -1) return 'Safari';
+        if (userAgent.indexOf('Firefox') !== -1) return 'Firefox';
+        if (userAgent.indexOf('Edg') !== -1) return 'Edge';
+        return 'Other';
     }
     
     // 페이지 종료 시 처리
