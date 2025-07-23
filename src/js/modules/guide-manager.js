@@ -747,8 +747,8 @@ export const GuideManager = {
                     <div class="modal-left-section">
                         <div class="modal-icon">🎉</div>
                         <h2>축하합니다!</h2>
-                        <p>Claude Code 가족이 되신 것을 환영합니다!</p>
-                        <p class="modal-subtitle">터미널에 <code>claude-code</code> 입력하고 작게라도 만들어보세요!</p>
+                        <p>Claude Code 설치완료를 축하드립니다!</p>
+                        <p class="modal-subtitle">터미널에 <code>claude</code> 입력하고 작게라도 만들어보세요!</p>
                         
                         <button class="docs-link-btn" onclick="window.open('https://docs.anthropic.com/en/docs/claude-code', '_blank')">
                             <i class="fas fa-book"></i>

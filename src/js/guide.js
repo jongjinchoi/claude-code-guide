@@ -35,6 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make GuideTracker available globally
     window.GuideTracker = GuideTracker;
     
+    // Make GuideManager available globally for debugging
+    window.guideManager = GuideManager;
+    
     // Setup theme toggle
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) {

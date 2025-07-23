@@ -65,8 +65,8 @@
 }
 
 .modal-icon {
-    font-size: 4rem;
-    margin-bottom: var(--space-3);
+    font-size: 3.5rem;
+    margin-bottom: var(--space-2);
 }
 
 .modal-content h2 {
@@ -203,8 +203,10 @@
 .modal-content-split {
     max-width: 720px;
     width: 90%;
+    max-height: 85vh;
     padding: 0;
     transition: max-width 0.3s ease;
+    margin: 5vh auto;
 }
 
 .modal-content-split.expanded {
@@ -218,7 +220,7 @@
 
 .modal-left-section {
     flex: 1;
-    padding: var(--space-4);
+    padding: var(--space-3);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -236,21 +238,21 @@
 
 /* Feedback Emoji Section */
 .feedback-emoji-section {
-    margin-top: var(--space-4);
+    margin-top: var(--space-2);
     width: 100%;
 }
 
 .feedback-question {
     font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-1);
     color: var(--text-primary);
 }
 
 .feedback-reason {
     font-size: 0.875rem;
     color: var(--text-secondary);
-    margin-bottom: var(--space-3);
+    margin-bottom: var(--space-2);
 }
 
 .feedback-reason .highlight-text {
@@ -260,7 +262,7 @@
 
 .emoji-options {
     display: flex;
-    gap: var(--space-2);
+    gap: var(--space-1);
     justify-content: center;
 }
 
@@ -268,13 +270,13 @@
     background: var(--surface);
     border: 2px solid var(--border-color);
     border-radius: var(--radius);
-    padding: var(--space-2);
+    padding: var(--space-1) var(--space-2);
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-1);
+    gap: 4px;
 }
 
 .emoji-btn:hover {
@@ -289,7 +291,7 @@
 }
 
 .emoji-btn .emoji {
-    font-size: 2rem;
+    font-size: 1.75rem;
 }
 
 .emoji-btn .emoji-label {
@@ -429,7 +431,7 @@
 /* Share Section */
 .modal-share-section {
     border-top: 1px solid var(--border-color);
-    padding: var(--space-4);
+    padding: var(--space-3);
     text-align: center;
 }
 
