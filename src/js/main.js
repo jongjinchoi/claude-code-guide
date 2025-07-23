@@ -175,10 +175,10 @@ function fetchUserCountViaJSONP() {
       }
     };
     
-    // script 태그로 요청
+    // script 태그로 요청 - getSheetCount 액션 사용
     const script = document.createElement('script');
     script.src = Analytics.APPS_SCRIPT_URL + 
-                 '?action=getCounter&metric=users&callback=' + callbackName + 
+                 '?action=getSheetCount&callback=' + callbackName + 
                  '&t=' + Date.now();
     
     script.onerror = () => {
