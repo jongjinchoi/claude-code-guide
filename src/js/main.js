@@ -92,87 +92,92 @@ async function incrementUserCount() {
       return; // 이미 카운트됨
     }
     
-    // Apps Script로 카운터 증가 요청 (타임아웃 추가)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
-    
-    const response = await fetch(Analytics.APPS_SCRIPT_URL + '?action=incrementCounter&metric=users', {
-      signal: controller.signal,
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    // Google Analytics로 사용자 증가 추적 (CORS 없음)
+    if (typeof gtag === 'function') {
+      gtag('event', 'user_count_increment', {
+        event_category: 'engagement',
+        user_id: Analytics.userId || 'anonymous'
+      });
     }
     
-    const data = await response.json();
+    // Apps Script 대신 간단한 이미지 요청 사용 (CORS 우회)
+    const img = new Image();
+    img.src = Analytics.APPS_SCRIPT_URL + '?action=incrementCounter&metric=users&t=' + Date.now();
     
-    if (data.success) {
-      sessionStorage.setItem('userCounted', 'true');
-      console.log('사용자 카운터 증가:', data.value);
-    }
+    // 즉시 카운트 완료로 처리 (네트워크 상관없이)
+    sessionStorage.setItem('userCounted', 'true');
+    console.log('사용자 카운터 증가 요청 완료');
+    
   } catch (error) {
-    if (error.name === 'AbortError') {
-      console.warn('사용자 카운터 요청 타임아웃 (10초)');
-    } else {
-      console.error('사용자 카운터 증가 실패:', error);
-    }
+    console.log('사용자 카운터 처리 중 오류 (무시됨):', error.message);
   }
 }
 
-// Apps Script에서 사용자 수 가져오기 (캐싱 적용)
+// Apps Script에서 사용자 수 가져오기 (CORS 문제로 JSONP 사용)
 async function fetchUserCount() {
-  // 캐싱 시스템을 통해 데이터 가져오기
   return await CacheManager.get(
     CacheManager.CACHE_KEYS.USER_COUNT,
     async () => {
       try {
-        // 타임아웃 설정
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
+        // JSONP를 사용하여 CORS 문제 우회
+        const count = await fetchUserCountViaJSONP();
         
-        const response = await fetch(Analytics.APPS_SCRIPT_URL + '?action=getCounter&metric=users', {
-          signal: controller.signal,
-          headers: {
-            'Accept': 'application/json'
-          }
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        if (count && count > 0) {
+          sessionStorage.setItem('lastUserCount', count);
+          return count;
         }
         
-        const data = await response.json();
+        throw new Error('Invalid count received');
         
-        // API가 유효한 값을 반환했는지 확인
-        if (data.value && data.value > 0) {
-          // 세션스토리지에도 저장 (빠른 접근용)
-          sessionStorage.setItem('lastUserCount', data.value);
-          return data.value;
-        }
-        
-        // API가 실패하면 세션스토리지의 마지막 값 사용
-        const lastKnownCount = sessionStorage.getItem('lastUserCount');
-        return lastKnownCount ? parseInt(lastKnownCount) : 0;
       } catch (error) {
-        if (error.name === 'AbortError') {
-          console.warn('사용자 수 조회 요청 타임아웃 (10초)');
-        } else {
-          console.error('사용자 수 가져오기 실패:', error);
-        }
-        // 에러 시에도 세션스토리지의 마지막 값 사용
-        const lastKnownCount = sessionStorage.getItem('lastUserCount');
-        return lastKnownCount ? parseInt(lastKnownCount) : 0;
+        console.log('JSONP 요청 실패, 폴백 값 사용:', error.message);
+        
+        // 폴백 시스템 사용
+        return getFallbackUserCount();
       }
     },
     CacheManager.CACHE_DURATION.COUNTER // 5분 캐싱
   );
+}
+
+// JSONP를 사용한 사용자 수 조회
+function fetchUserCountViaJSONP() {
+  return new Promise((resolve, reject) => {
+    const callbackName = 'jsonp_callback_' + Math.random().toString(36).substr(2, 9);
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error('JSONP timeout'));
+    }, 5000); // 5초 타임아웃
+    
+    // 전역 콜백 함수 생성
+    window[callbackName] = (data) => {
+      cleanup();
+      if (data && data.value) {
+        resolve(data.value);
+      } else {
+        reject(new Error('Invalid JSONP response'));
+      }
+    };
+    
+    // script 태그로 요청
+    const script = document.createElement('script');
+    script.src = Analytics.APPS_SCRIPT_URL + 
+                 '?action=getCounter&metric=users&callback=' + callbackName + 
+                 '&t=' + Date.now();
+    
+    script.onerror = () => {
+      cleanup();
+      reject(new Error('JSONP script load error'));
+    };
+    
+    function cleanup() {
+      clearTimeout(timeout);
+      if (window[callbackName]) delete window[callbackName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+    
+    document.head.appendChild(script);
+  });
 }
 
 // 폴백 사용자 수 계산 (API 실패 시 사용)
