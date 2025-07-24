@@ -2,6 +2,7 @@
 // 여러 이벤트를 모아서 한 번에 전송하여 API 요청 수를 줄입니다
 
 import { AnalyticsAPI } from './supabase-client.js';
+import { SessionManager } from './session-manager.js';
 
 export class BatchAnalytics {
     constructor(appsScriptUrl, options = {}) {
@@ -34,7 +35,7 @@ export class BatchAnalytics {
             parameters,
             timestamp: new Date().toISOString(),
             userId: this.getUserId(),
-            sessionId: this.getSessionId()
+            sessionId: SessionManager.getSessionId()
         };
         
         this.queue.push(event);
@@ -214,7 +215,7 @@ export class BatchAnalytics {
             'sad': 2        // 😕 아쉬워요
         };
         
-        return textScores[emoji] || 0;
+        return textScores[emoji] || null;
     }
     
     getDevice() {
@@ -292,15 +293,15 @@ export class BatchAnalytics {
         return userId;
     }
     
-    // 세션 ID 가져오기
-    getSessionId() {
-        let sessionId = sessionStorage.getItem('guide-session-id');
-        if (!sessionId) {
-            sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            sessionStorage.setItem('guide-session-id', sessionId);
-        }
-        return sessionId;
-    }
+    // 세션 ID 가져오기 - SessionManager로 이동됨
+    // getSessionId() {
+    //     let sessionId = sessionStorage.getItem('guide-session-id');
+    //     if (!sessionId) {
+    //         sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    //         sessionStorage.setItem('guide-session-id', sessionId);
+    //     }
+    //     return sessionId;
+    // }
     
     // 정리
     destroy() {

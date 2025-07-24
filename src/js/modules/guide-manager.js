@@ -1,5 +1,6 @@
 // Guide Progress Management
 import { Analytics } from './analytics.js';
+import { SessionManager } from './session-manager.js';
 
 export const GuideManager = {
     currentStep: 0,
@@ -37,11 +38,12 @@ export const GuideManager = {
     },
     
     initSession() {
-        // 세션 ID 생성 또는 기존 세션 가져오기
-        this.sessionId = sessionStorage.getItem('guide-session-id');
-        if (!this.sessionId) {
-            this.sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            sessionStorage.setItem('guide-session-id', this.sessionId);
+        // 세션 ID 가져오기 (SessionManager 사용)
+        this.sessionId = SessionManager.getSessionId();
+        const isNewSession = !sessionStorage.getItem('guide_session_started');
+        
+        if (isNewSession) {
+            sessionStorage.setItem('guide_session_started', 'true');
             
             // 새 세션 시작 - Analytics 이벤트
             Analytics.trackEvent('guide_started', {
@@ -962,6 +964,54 @@ export const GuideManager = {
             if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 제작자에게 피드백 남기기';
+            }
+            
+            // 사용자에게 에러 메시지 표시
+            const feedbackSection = document.getElementById('feedbackDetailSection');
+            if (feedbackSection) {
+                // 상세 에러 유형별 메시지
+                let errorMessage = '일시적인 오류가 발생했습니다.';
+                let errorHint = '잠시 후 다시 시도해주세요.';
+                
+                if (!navigator.onLine) {
+                    errorMessage = '인터넷 연결을 확인해주세요.';
+                    errorHint = '네트워크에 연결되어 있지 않습니다.';
+                } else if (error.message && error.message.includes('timeout')) {
+                    errorMessage = '서버 응답이 느립니다.';
+                    errorHint = '네트워크 상태를 확인하고 다시 시도해주세요.';
+                } else if (error.message && (error.message.includes('500') || error.message.includes('502') || error.message.includes('503'))) {
+                    errorMessage = '서버에 일시적인 문제가 발생했습니다.';
+                    errorHint = '잠시 후 다시 시도해주세요.';
+                } else if (error.message && error.message.includes('404')) {
+                    errorMessage = '요청하신 기능을 찾을 수 없습니다.';
+                    errorHint = '페이지를 새로고침 후 다시 시도해주세요.';
+                }
+                
+                // 에러 메시지를 피드백 섹션 상단에 추가
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'feedback-error';
+                errorDiv.innerHTML = `
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p class="error-title">${errorMessage}</p>
+                    <p class="error-hint">${errorHint}</p>
+                `;
+                
+                // 기존 에러 메시지가 있다면 제거
+                const existingError = feedbackSection.querySelector('.feedback-error');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                // 피드백 섹션 맨 위에 에러 메시지 추가
+                feedbackSection.insertBefore(errorDiv, feedbackSection.firstChild);
+                
+                // 5초 후 에러 메시지 자동 제거
+                setTimeout(() => {
+                    if (errorDiv.parentNode) {
+                        errorDiv.style.opacity = '0';
+                        setTimeout(() => errorDiv.remove(), 300);
+                    }
+                }, 5000);
             }
         }
     },

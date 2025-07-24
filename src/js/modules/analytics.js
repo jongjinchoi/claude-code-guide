@@ -2,6 +2,7 @@
 import { BatchAnalytics } from './batch-analytics.js';
 import { CacheManager } from './cache-manager.js';
 import { AnalyticsAPI } from './supabase-client.js';
+import { SessionManager } from './session-manager.js';
 
 export const Analytics = {
     // GA4 측정 ID
@@ -39,8 +40,8 @@ export const Analytics = {
             useSupabase: this.USE_SUPABASE
         });
         
-        // 세션 ID 생성
-        this.sessionId = this.generateSessionId();
+        // 세션 ID 가져오기 (SessionManager 사용)
+        this.sessionId = SessionManager.getSessionId();
         
         // 페이지 로드 시간 기록
         this.pageLoadTime = Date.now();
@@ -64,12 +65,12 @@ export const Analytics = {
         this.setupOnlineStatusMonitoring();
     },
     
-    // 세션 ID 생성
-    generateSessionId() {
-        const timestamp = Date.now();
-        const random = Math.random().toString(36).substring(2, 15);
-        return `session_${timestamp}_${random}`;
-    },
+    // 세션 ID 생성 - SessionManager로 이동됨
+    // generateSessionId() {
+    //     const timestamp = Date.now();
+    //     const random = Math.random().toString(36).substring(2, 15);
+    //     return `session_${timestamp}_${random}`;
+    // },
     
     // Duration 추적 설정
     setupDurationTracking() {
@@ -445,7 +446,7 @@ export const Analytics = {
             'sad': 2        // 😕 아쉬워요
         };
         
-        return textScores[emoji] || 0;
+        return textScores[emoji] || null;
     },
     
     // 사용자 ID 관리
