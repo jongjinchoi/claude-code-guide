@@ -437,8 +437,15 @@ export const Analytics = {
     
     // 이모지를 점수로 변환
     emojiToScore(emoji) {
-        const scores = { '😡': 1, '😟': 2, '😐': 3, '😊': 4, '😍': 5 };
-        return scores[emoji] || 0;
+        // UI에 실제로 있는 4개 옵션만 처리
+        const textScores = { 
+            'love': 5,      // 😍 최고예요
+            'good': 4,      // 😊 좋아요
+            'neutral': 3,   // 😐 보통이에요
+            'sad': 2        // 😕 아쉬워요
+        };
+        
+        return textScores[emoji] || 0;
     },
     
     // 사용자 ID 관리
