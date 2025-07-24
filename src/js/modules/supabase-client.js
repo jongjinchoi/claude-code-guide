@@ -5,11 +5,21 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// 환경 변수 검증
+// 환경 변수 검증 및 상태 표시
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase environment variables are required. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment.');
-  // Supabase 기능을 비활성화하고 Google Apps Script로 폴백
-  console.warn('Falling back to Google Apps Script for analytics.');
+  console.error('❌ Supabase environment variables are missing!');
+  console.error('Required: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
+  console.warn('⚠️  Falling back to Google Apps Script for analytics.');
+  
+  // 개발자를 위한 상태 정보
+  if (import.meta.env.DEV) {
+    console.info('💡 Development mode: Set variables in .env.local file');
+  } else {
+    console.info('💡 Production mode: Set variables in Vercel dashboard');
+  }
+} else {
+  console.info('✅ Supabase initialized successfully');
+  console.info(`📍 Connected to: ${supabaseUrl}`);
 }
 
 // Initialize Supabase client only if environment variables are present
@@ -128,5 +138,25 @@ export const SupabaseUtils = {
   // 타임스탬프 포맷
   formatTimestamp(date = new Date()) {
     return date.toISOString();
+  },
+  
+  // 환경 변수 상태 확인 함수
+  checkStatus() {
+    const status = {
+      initialized: !!supabase,
+      hasUrl: !!import.meta.env.VITE_SUPABASE_URL,
+      hasKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
+      environment: import.meta.env.MODE,
+      url: import.meta.env.VITE_SUPABASE_URL ? '✅ Set' : '❌ Not set',
+      key: import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Not set'
+    };
+    
+    console.table(status);
+    return status;
   }
 };
+
+// 개발자 도구에서 쉽게 접근할 수 있도록 전역 노출
+if (typeof window !== 'undefined') {
+  window.checkSupabase = SupabaseUtils.checkStatus;
+}
