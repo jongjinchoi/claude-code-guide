@@ -101,23 +101,15 @@ export const Analytics = {
     
     // Google Analytics 스크립트 로드
     loadGoogleAnalytics() {
-        // gtag 스크립트 추가
-        const script = document.createElement('script');
-        script.async = true;
-        script.src = `https://www.googletagmanager.com/gtag/js?id=${this.GA_MEASUREMENT_ID}`;
-        document.head.appendChild(script);
-        
-        // gtag 초기화
-        window.dataLayer = window.dataLayer || [];
-        window.gtag = function() {
-            window.dataLayer.push(arguments);
-        };
-        window.gtag('js', new Date());
-        window.gtag('config', this.GA_MEASUREMENT_ID, {
-            // 개인정보 보호 설정
-            anonymize_ip: true,
-            cookie_flags: 'SameSite=None;Secure'
-        });
+        // HTML에서 이미 GA를 로드하고 있으므로 중복 로드 제거
+        // gtag가 이미 정의되어 있는지 확인
+        if (typeof gtag === 'undefined') {
+            console.warn('Google Analytics not loaded. Please check if GA script is included in HTML.');
+            // gtag 함수가 없을 경우 더미 함수 생성
+            window.gtag = function() {
+                console.log('GA not loaded, event ignored:', arguments);
+            };
+        }
     },
     
     // 페이지뷰 추적
