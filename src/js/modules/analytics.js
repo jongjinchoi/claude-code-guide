@@ -30,6 +30,9 @@ export const Analytics = {
     // 세션 ID (탭마다 고유)
     sessionId: null,
     
+    // 신규 사용자 여부 (세션 단위)
+    isNewUserSession: null,
+    
     // 초기화
     init() {
         // 배치 분석 시스템 초기화
@@ -64,13 +67,6 @@ export const Analytics = {
         // 온라인 상태 모니터링 및 실패한 이벤트 재전송
         this.setupOnlineStatusMonitoring();
     },
-    
-    // 세션 ID 생성 - SessionManager로 이동됨
-    // generateSessionId() {
-    //     const timestamp = Date.now();
-    //     const random = Math.random().toString(36).substring(2, 15);
-    //     return `session_${timestamp}_${random}`;
-    // },
     
     // Duration 추적 설정
     setupDurationTracking() {
@@ -304,7 +300,8 @@ export const Analytics = {
     
     // Supabase 형식으로 데이터 변환
     convertToSupabaseFormat(eventName, data) {
-        const isNewUser = localStorage.getItem('claude_guide_user_id') ? false : true;
+        // 세션 단위로 일관된 신규 사용자 여부 사용
+        const isNewUser = this.isNewUserSession || false;
         
         const supabaseData = {
             timestamp: data.timestamp,
@@ -453,11 +450,21 @@ export const Analytics = {
     getUserId() {
         let userId = localStorage.getItem('claude_guide_user_id');
         if (!userId) {
+            // 신규 사용자인 경우
+            if (this.isNewUserSession === null) {
+                this.isNewUserSession = true;
+                sessionStorage.setItem('is_new_user_session', 'true');
+            }
             const timestamp = Date.now();
             const random = Math.random().toString(36).substring(2, 15);
             const browserFingerprint = this.generateFingerprint();
             userId = `user_${timestamp}_${random}_${browserFingerprint}`;
             localStorage.setItem('claude_guide_user_id', userId);
+        } else {
+            // 기존 사용자인 경우
+            if (this.isNewUserSession === null) {
+                this.isNewUserSession = sessionStorage.getItem('is_new_user_session') === 'true';
+            }
         }
         return userId;
     },

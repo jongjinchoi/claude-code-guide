@@ -80,12 +80,21 @@ npm run build
 
 ### 환경 변수 설정
 
-프로젝트 루트에 `.env` 파일 생성:
+프로젝트 루트에 `.env.local` 파일 생성:
 
 ```env
+# Supabase Configuration (Required)
+VITE_SUPABASE_URL=your-supabase-project-url
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# Google Analytics (Optional)
 VITE_GA_MEASUREMENT_ID=your-ga4-measurement-id
-VITE_APPS_SCRIPT_URL=your-apps-script-web-app-url
 ```
+
+> **보안 주의사항**: 
+> - `.env.local` 파일은 절대 Git에 커밋하지 마세요
+> - Supabase Anon Key는 공개되어도 안전하지만, 프로덕션에서는 환경변수로 관리하세요
+> - Vercel 배포 시 환경변수를 대시보드에서 설정하세요
 
 ## 📊 분석 시스템
 

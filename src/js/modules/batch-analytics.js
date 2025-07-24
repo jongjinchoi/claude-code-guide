@@ -142,7 +142,7 @@ export class BatchAnalytics {
             event_name: eventName,
             user_id: userId,
             session_id: sessionId,
-            is_new_user: parameters.customData?.firstVisit || false,
+            is_new_user: sessionStorage.getItem('is_new_user_session') === 'true',
             page_path: parameters.page_path || window.location.pathname,
             referrer_source: this.extractReferrerSource(parameters.referrer),
             referrer_medium: this.extractReferrerMedium(parameters.referrer),
@@ -231,7 +231,7 @@ export class BatchAnalytics {
         if (userAgent.indexOf('Mac') !== -1) return 'MacOS';
         if (userAgent.indexOf('Linux') !== -1) return 'Linux';
         if (userAgent.indexOf('Android') !== -1) return 'Android';
-        if (userAgent.indexOf('iOS') !== -1) return 'iOS';
+        if (userAgent.indexOf('iPhone') !== -1 || userAgent.indexOf('iPad') !== -1) return 'iOS';
         return 'Unknown';
     }
     
@@ -292,16 +292,6 @@ export class BatchAnalytics {
         }
         return userId;
     }
-    
-    // 세션 ID 가져오기 - SessionManager로 이동됨
-    // getSessionId() {
-    //     let sessionId = sessionStorage.getItem('guide-session-id');
-    //     if (!sessionId) {
-    //         sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    //         sessionStorage.setItem('guide-session-id', sessionId);
-    //     }
-    //     return sessionId;
-    // }
     
     // 정리
     destroy() {
