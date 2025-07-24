@@ -5,11 +5,12 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run clean && vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist"
   },
   "devDependencies": {
+    "terser": "^5.43.1",
     "vite": "^5.0.0"
   },
   "type": "module",
