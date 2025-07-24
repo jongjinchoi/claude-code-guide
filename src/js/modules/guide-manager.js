@@ -12,6 +12,7 @@ export const GuideManager = {
     errorSteps: [],
     isProcessingStep: false,
     isProcessingCompletion: false,
+    isSubmittingFeedback: false,
     
     // 실제 활동 시간 계산 (누적 시간 + 현재 세션 시간)
     getTotalActiveTime() {
@@ -905,6 +906,19 @@ export const GuideManager = {
     },
     
     async submitFeedback() {
+        // 중복 제출 방지
+        if (this.isSubmittingFeedback) {
+            console.log('피드백이 이미 제출 중입니다.');
+            return;
+        }
+        
+        this.isSubmittingFeedback = true;
+        const submitBtn = document.querySelector('.feedback-submit-btn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 제출 중...';
+        }
+        
         const feedbackText = document.getElementById('feedbackText').value.trim();
         
         // Log feedback
@@ -936,8 +950,19 @@ export const GuideManager = {
             
             console.log('Feedback submitted successfully');
             
+            // 플래그 해제
+            this.isSubmittingFeedback = false;
+            
         } catch (error) {
             console.error('Error in submitFeedback:', error);
+            
+            // 에러 시 버튼 복원
+            this.isSubmittingFeedback = false;
+            const submitBtn = document.querySelector('.feedback-submit-btn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 제작자에게 피드백 남기기';
+            }
         }
     },
     
