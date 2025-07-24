@@ -428,6 +428,47 @@
     color: var(--text-secondary);
 }
 
+/* Feedback Error Styles */
+.feedback-error {
+    background-color: var(--error-bg, #fee);
+    border: 1px solid var(--error-border, #fcc);
+    border-radius: var(--radius);
+    padding: var(--space-3);
+    margin-bottom: var(--space-3);
+    text-align: center;
+    transition: opacity 0.3s ease;
+}
+
+.feedback-error i {
+    color: var(--error-color, #e53e3e);
+    font-size: 2rem;
+    margin-bottom: var(--space-2);
+}
+
+.feedback-error .error-title {
+    color: var(--error-color, #e53e3e);
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: var(--space-1);
+}
+
+.feedback-error .error-hint {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .feedback-error {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+[data-theme="dark"] .feedback-error i,
+[data-theme="dark"] .feedback-error .error-title {
+    color: #fc8181;
+}
+
 /* Share Section */
 .modal-share-section {
     border-top: 1px solid var(--border-color);
