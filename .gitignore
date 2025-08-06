@@ -140,3 +140,6 @@ test-checklist.md
 # 데이터 파일
 sheet_data/
 *.csv
+
+# 데이터 분석 폴더
+data-analysis/
