@@ -172,6 +172,18 @@ if not errors.empty:
         if pd.notna(error_type):
             print(f"  {error_type}: {count}개")
 
+# 10-1. 일별 가이드 완료 추세 분석
+print(f"\n📈 일별 가이드 완료 추세:")
+guide_completed_daily = df[df['event_name'] == 'guide_completed'].groupby('date')['user_id'].nunique()
+for date, count in guide_completed_daily.items():
+    print(f"  {date}: {count}명 완료")
+
+# 누적 완료자 수
+cumulative_completers = guide_completed_daily.cumsum()
+print(f"\n📊 누적 가이드 완료자:")
+for date, total in cumulative_completers.items():
+    print(f"  {date}: 누적 {total}명")
+
 # 11. 피드백 분석
 feedback = df[df['event_name'] == 'feedback_submitted']
 if not feedback.empty:
@@ -181,6 +193,19 @@ if not feedback.empty:
     for score, count in feedback_scores.items():
         if pd.notna(score):
             print(f"  점수 {score}: {count}개")
+
+# 12. 일별 신규 사용자 및 전환율 분석
+print(f"\n🚀 일별 신규 사용자 및 전환율:")
+for date in daily_stats.index[-7:]:
+    day_df = df[df['date'] == date]
+    new_users = day_df['user_id'].nunique()
+    starters = day_df[day_df['event_name'] == 'guide_started']['user_id'].nunique()
+    completers = day_df[day_df['event_name'] == 'guide_completed']['user_id'].nunique()
+    
+    start_rate = (starters / new_users * 100) if new_users > 0 else 0
+    complete_rate = (completers / starters * 100) if starters > 0 else 0
+    
+    print(f"  {date}: 방문 {new_users}명 → 시작 {starters}명 ({start_rate:.1f}%) → 완료 {completers}명 ({complete_rate:.1f}%)")
 
 print("\n" + "="*60)
 print("✨ 분석 완료!")
