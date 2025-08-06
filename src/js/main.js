@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   GuideTracker.checkFirstVisit();
   
   // Initialize landing page counter
-  initializeLandingCounter(); // 카운터 기능 활성화 (Google Sheets J1 셀에서 읽기)
+  // initializeLandingCounter(); // 카운터 기능 비활성화
   
   // Initialize version updater for guide and FAQ pages
   initVersionUpdater();
